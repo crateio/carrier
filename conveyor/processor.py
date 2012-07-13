@@ -95,7 +95,44 @@ class BaseProcessor(object):
         return data
 
     def to_warehouse_version(self, release, extra=None):
-        pass
+        data = {
+            "version": release["version"],
+
+            "summary": get(release, "summary", ""),
+            "description": get(release, "description", ""),
+            "license": get(release, "license", ""),
+
+            "author": {
+                "name": get(release, "author", ""),
+                "email": get(release, "author_email", ""),
+            },
+            "maintainer": {
+                "name": get(release, "maintainer", ""),
+                "email": get(release, "maintainer_email", ""),
+            },
+
+            "classifiers": get(release, "classifiers"),
+            "uris": {},
+
+            "requires_python": get(release, "requires_python", ""),
+        }
+
+        if get(release, "download_url"):
+            data["uris"]["Download"] = release["download_url"]
+
+        if get(release, "home_page"):
+            data["uris"]["Home page"] = release["home_page"]
+
+        if get(release, "bugtrack_url"):
+            data["uris"]["Bug tracker"] = release["bugtrack_url"]
+
+        if get(release, "docs_url"):
+            data["uris"]["Documentation"] = release["docs_url"]
+
+        if extra is not None:
+            data.update(extra)
+
+        return data
 
     def to_warehouse_file(self, release, extra=None):
         pass
