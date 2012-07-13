@@ -37,6 +37,9 @@ class BaseProcessor(object):
     def get_releases(self, name, version=None):
         if version is None:
             versions = self.client.package_releases(name, True)
+
+            if isinstance(versions, basestring):
+                versions = [versions]
         else:
             versions = [version]
 
