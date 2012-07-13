@@ -3,16 +3,20 @@ from __future__ import division
 
 import collections
 
-from xmlrpc2 import client as xmlrpc2
+import slumber
+import slumber.exceptions
+import xmlrpc2.client
 
 
 class BaseProcessor(object):
 
-    def __init__(self, index, *args, **kwargs):
+    def __init__(self, index, warehouse, *args, **kwargs):
         super(BaseProcessor, self).__init__(*args, **kwargs)
 
-        self.index = index
-        self.client = xmlrpc2.Client(self.index)
+        wargs, wkwargs = warehouse
+
+        self.client = xmlrpc2.client.Client(index)
+        self.warehouse = slumber.API(*wargs, **wkwargs)
 
     def process(self):
         raise NotImplementedError
