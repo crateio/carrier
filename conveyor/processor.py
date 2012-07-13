@@ -88,7 +88,8 @@ class BaseProcessor(object):
             # @@@ Update Version
             pass
 
-        # @@@ Get or Create Files
+        # @@@ Get/Create/Delete Files
+        # @@@ Batch Update?
 
     def to_warehouse_project(self, release, extra=None):
         data = {"name": release["name"]}
