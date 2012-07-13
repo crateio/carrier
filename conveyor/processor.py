@@ -42,6 +42,18 @@ class BaseProcessor(object):
 
             yield item
 
+    def sync_release(self, release):
+        # Get or Create Project
+        try:
+            project = self.warehouse.projects(release["name"]).get()
+        except slumber.exceptions.HttpClientError as e:
+            if e.response.status_code == 404:
+                project = self.warehouse.projects.post({})["resource_uri"]
+
+        # @@@ Create Version
+
+        # @@@ Create File
+
 
 class BulkProcessor(BaseProcessor):
 
