@@ -18,9 +18,9 @@ class BaseProcessor(object):
 
     def get_releases(self, name, version=None):
         if version is None:
-            return set(self.client.package_releases(name, True))
+            return self.client.package_releases(name, True)
         else:
-            return set([version])
+            return [version]
 
 
 class BulkProcessor(BaseProcessor):
