@@ -63,7 +63,6 @@ class BaseProcessor(object):
 
     def sync_release(self, release):
         # Get or Create Project
-        # @@@ Update project if it already existed
         try:
             project = self.warehouse.projects(release["normalized"]).get()
         except slumber.exceptions.HttpClientError as e:
@@ -72,9 +71,11 @@ class BaseProcessor(object):
 
             data = self.to_warehouse_project(release)
             project = self.warehouse.projects.post(data)
+        else:
+            # @@@ Update project
+            pass
 
         # Get or Create Version
-        # @@@ Update Version if it already existed
         try:
             version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get()
         except slumber.exceptions.HttpClientError as e:
@@ -83,6 +84,9 @@ class BaseProcessor(object):
 
             data = self.to_warehouse_version(release, extra={"project": project["resource_uri"]})
             version = self.warehouse.projects(release["normalized"]).versions().post(data)
+        else:
+            # @@@ Update Version
+            pass
 
         # @@@ Get or Create Files
 
