@@ -51,7 +51,7 @@ class BaseProcessor(object):
         except slumber.exceptions.HttpClientError as e:
             if e.response.status_code == 404:
                 data = self.to_warehouse_project(release)
-                project = self.warehouse.projects.post(data)["resource_uri"]
+                project = self.warehouse.projects.post(data)
 
         # Get or Create Version
         try:
@@ -59,7 +59,7 @@ class BaseProcessor(object):
         except slumber.exceptions.HttpClientError as e:
             if e.response.status_code == 404:
                 data = self.to_warehouse_version(release, extra={"project": project})
-                version = self.warehouse.projects(release["name"]).versions().post(data)["resource_uri"]
+                version = self.warehouse.projects(release["name"]).versions().post(data)
 
         # @@@ Get or Create Files
 
