@@ -2,10 +2,14 @@ from __future__ import absolute_import
 from __future__ import division
 
 import collections
+import re
 
 import slumber
 import slumber.exceptions
 import xmlrpc2.client
+
+
+_normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
 
 
 class BaseProcessor(object):
@@ -38,13 +42,14 @@ class BaseProcessor(object):
             else:
                 raise RuntimeError("Do not understand the type returned by release_urls")
 
-            item.update({"files": urls})
+            item.update({
+                "normalized": _normalize_regex.sub("-", item["name"]).lower(),
+                "files": urls,
+            })
 
             yield item
 
     def sync_release(self, release):
-        # @@@ Normalize Name before attempting Get or Create
-
         # Get or Create Project
         try:
             project = self.warehouse.projects(release["name"]).get()
