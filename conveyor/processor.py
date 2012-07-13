@@ -12,6 +12,15 @@ import xmlrpc2.client
 _normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
 
 
+def get(d, attr, default=None):
+    value = d.get(attr, default)
+
+    if not value:
+        value = default
+
+    return value
+
+
 class BaseProcessor(object):
 
     def __init__(self, index, warehouse, *args, **kwargs):
@@ -71,7 +80,12 @@ class BaseProcessor(object):
         # @@@ Get or Create Files
 
     def to_warehouse_project(self, release, extra=None):
-        return {"name": release["name"]}
+        data = {"name": release["name"]}
+
+        if extra is not None:
+            data.update(extra)
+
+        return data
 
     def to_warehouse_version(self, release, extra=None):
         pass
