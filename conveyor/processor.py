@@ -16,6 +16,12 @@ class BaseProcessor(object):
     def process(self):
         raise NotImplementedError
 
+    def get_releases(self, name, version=None):
+        if version is None:
+            return set(self.client.package_releases(name, True))
+        else:
+            return set([version])
+
 
 class BulkProcessor(BaseProcessor):
 
