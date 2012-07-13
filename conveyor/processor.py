@@ -67,18 +67,22 @@ class BaseProcessor(object):
         try:
             project = self.warehouse.projects(release["normalized"]).get()
         except slumber.exceptions.HttpClientError as e:
-            if e.response.status_code == 404:
-                data = self.to_warehouse_project(release)
-                project = self.warehouse.projects.post(data)
+            if not e.response.status_code == 404:
+                raise
+
+            data = self.to_warehouse_project(release)
+            project = self.warehouse.projects.post(data)
 
         # Get or Create Version
         # @@@ Update Version if it already existed
         try:
             version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get()
         except slumber.exceptions.HttpClientError as e:
-            if e.response.status_code == 404:
-                data = self.to_warehouse_version(release, extra={"project": project})
-                version = self.warehouse.projects(release["normalized"]).versions().post(data)
+            if not e.response.status_code == 404:
+                raise
+
+            data = self.to_warehouse_version(release, extra={"project": project["resource_uri"]})
+            version = self.warehouse.projects(release["normalized"]).versions().post(data)
 
         # @@@ Get or Create Files
 
