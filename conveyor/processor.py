@@ -48,7 +48,7 @@ class BaseProcessor(object):
             project = self.warehouse.projects(release["name"]).get()
         except slumber.exceptions.HttpClientError as e:
             if e.response.status_code == 404:
-                project = self.warehouse.projects.post({})["resource_uri"]
+                project = self.warehouse.projects.post({"name": release["name"]})["resource_uri"]
 
         # @@@ Create Version
 
