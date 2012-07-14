@@ -134,6 +134,14 @@ class BaseProcessor(object):
         if get(release, "docs_url"):
             data["uris"]["Documentation"] = release["docs_url"]
 
+        if get(release, "platform"):
+            platforms = get(release, "platform")
+
+            if isinstance(platforms, basestring):
+                platforms = [platforms]
+
+            data["platforms"] = platforms
+
         if extra is not None:
             data.update(extra)
 
