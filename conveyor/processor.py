@@ -15,7 +15,7 @@ _normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
 def get(d, attr, default=None):
     value = d.get(attr, default)
 
-    if not value:
+    if not value or value == "UNKNOWN":
         value = default
 
     return value
