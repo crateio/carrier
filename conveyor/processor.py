@@ -153,6 +153,10 @@ class BaseProcessor(object):
 
             data["keywords"] = keywords
 
+        for url in get(release, "project_url", []):
+            label, uri = url.split(",", 1)
+            data["uris"][label] = uri
+
         if extra is not None:
             data.update(extra)
 
