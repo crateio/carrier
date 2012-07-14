@@ -142,6 +142,17 @@ class BaseProcessor(object):
 
             data["platforms"] = platforms
 
+        if get(release, "keywords"):
+            keywords = get(release, "keywords")
+
+            # Check for a comma
+            if "," in keywords:
+                keywords = [x.strip() for x in keywords.split(",")]
+            else:
+                keywords = [x.strip() for x in keywords.split()]
+
+            data["keywords"] = keywords
+
         if extra is not None:
             data.update(extra)
 
