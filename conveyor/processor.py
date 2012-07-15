@@ -10,6 +10,19 @@ import xmlrpc2.client
 
 
 _normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
+_distutils2_version_capture = re.compile("^(.*?)(?:\(([^()]+)\))?$")
+
+
+def split_meta(meta):
+    meta_split = meta.split(";", 1)
+    meta_name, meta_version = _distutils2_version_capture.search(meta_split[0].strip()).groups()
+    meta_env = meta_split[1].strip() if len(meta_split) == 2 else ""
+
+    return {
+        "name": meta_name,
+        "version": meta_version if meta_version is not None else "",
+        "environment": meta_env,
+    }
 
 
 def get(d, attr, default=None):
@@ -156,6 +169,10 @@ class BaseProcessor(object):
         for url in get(release, "project_url", []):
             label, uri = url.split(",", 1)
             data["uris"][label] = uri
+
+        data["requires"] = [split_meta(req) for req in get(release, "requires_dist", [])]
+        data["provides"] = [split_meta(req) for req in get(release, "provides_dist", [])]
+        data["obsoletes"] = [split_meta(req) for req in get(release, "obsoletes_dist", [])]
 
         if extra is not None:
             data.update(extra)
