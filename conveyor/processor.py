@@ -133,6 +133,7 @@ class BaseProcessor(object):
             "uris": {},
 
             "requires_python": get(release, "requires_python", ""),
+            "requires_external": get(release, "requires_external", []),
         }
 
         if get(release, "download_url"):
