@@ -28,7 +28,7 @@ def split_meta(meta):
 def get(d, attr, default=None):
     value = d.get(attr, default)
 
-    if not value or value == "UNKNOWN":
+    if not value or value in ["UNKNOWN", "None"]:
         value = default
 
     return value
