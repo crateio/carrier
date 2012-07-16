@@ -4,6 +4,7 @@ from __future__ import division
 import collections
 import re
 
+import requests
 import slumber
 import slumber.exceptions
 import xmlrpc2.client
@@ -36,12 +37,17 @@ def get(d, attr, default=None):
 
 class BaseProcessor(object):
 
-    def __init__(self, index, warehouse, *args, **kwargs):
+    def __init__(self, index, warehouse, session=None, *args, **kwargs):
         super(BaseProcessor, self).__init__(*args, **kwargs)
 
         wargs, wkwargs = warehouse
 
-        self.client = xmlrpc2.client.Client(index)
+        if session is None:
+            session = requests.session()
+
+        self.session = session
+
+        self.client = xmlrpc2.client.Client(index, session=self.session)
         self.warehouse = slumber.API(*wargs, **wkwargs)
 
     def process(self):
@@ -67,9 +73,24 @@ class BaseProcessor(object):
             else:
                 raise RuntimeError("Do not understand the type returned by release_urls")
 
+            files = []
+
+            for url in urls:
+                data = url.copy()
+
+                try:
+                    resp = self.session.get(data["url"], prefetch=True)
+                    resp.raise_for_status()
+                except Exception:
+                    # @@@ Catch the proper exceptions (and do what?)
+                    raise
+
+                data["file_data"] = resp.content
+                files.append(data)
+
             item.update({
                 "normalized": _normalize_regex.sub("-", item["name"]).lower(),
-                "files": urls,
+                "files": files,
             })
 
             yield item
