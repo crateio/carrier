@@ -2,20 +2,18 @@ from __future__ import absolute_import
 from __future__ import division
 
 
-import os
 import urlparse
 
 from conveyor.processor import BulkProcessor
-from conveyor.store import RedisStore
 # @@@ Switch all Urls to SSL
 
 
 class Conveyor(object):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, index_url, warehouse_url, store=None, *args, **kwargs):
         super(Conveyor, self).__init__(*args, **kwargs)
 
-        warehouse_url = urlparse.urlparse(os.environ["CONVEYOR_WAREHOUSE_URL"])
+        warehouse_url = urlparse.urlparse(warehouse_url)
         warehouse = (
             [urlparse.urlunparse([warehouse_url.scheme, warehouse_url.hostname, warehouse_url.path, warehouse_url.params, warehouse_url.query, warehouse_url.fragment])],
             {
@@ -23,13 +21,8 @@ class Conveyor(object):
             },
         )
 
-        if "REDIS_URL" in os.environ:
-            store = RedisStore(prefix="conveyor", url=os.environ.get["REDIS_URL"])
-        else:
-            store = None
-
         self.config = {
-            "index": os.environ.get("CONVEYOR_INDEX_URL", "http://pypi.python.org/pypi"),
+            "index": index_url,
             "warehouse": warehouse,
             "store": store,
         }
