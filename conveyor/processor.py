@@ -5,11 +5,14 @@ import base64
 import collections
 import datetime
 import re
+import time
 
 import requests
 import slumber
 import slumber.exceptions
 import xmlrpc2.client
+
+from conveyor.store import InMemoryStore
 
 
 _normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
@@ -39,7 +42,7 @@ def get(d, attr, default=None):
 
 class BaseProcessor(object):
 
-    def __init__(self, index, warehouse, session=None, *args, **kwargs):
+    def __init__(self, index, warehouse, session=None, store=None, *args, **kwargs):
         super(BaseProcessor, self).__init__(*args, **kwargs)
 
         wargs, wkwargs = warehouse
@@ -51,6 +54,9 @@ class BaseProcessor(object):
 
         self.client = xmlrpc2.client.Client(index, session=self.session)
         self.warehouse = slumber.API(*wargs, **wkwargs)
+
+        if store is None:
+            self.store = InMemoryStore()
 
     def process(self):
         raise NotImplementedError
@@ -246,8 +252,12 @@ class BulkProcessor(BaseProcessor):
         # @@@ Should we handle attempting to delete?
         # @@@ Need to store completion time
 
+        current = time.mktime(datetime.datetime.utcnow().timetuple())
+
         names = set(self.client.list_packages())
 
         for package in names:
             for release in self.get_releases(package):
                 self.sync_release(release)
+
+        self.store.set("pypi:since", current)
