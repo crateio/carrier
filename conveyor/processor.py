@@ -7,6 +7,7 @@ import datetime
 import re
 import time
 
+import pytz
 import requests
 import slumber
 import slumber.exceptions
@@ -83,7 +84,7 @@ class BaseProcessor(object):
 
             files = []
 
-            oldest = datetime.datetime.now()
+            oldest = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
 
             for url in urls:
                 data = url.copy()
