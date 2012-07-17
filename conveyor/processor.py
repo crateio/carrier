@@ -63,8 +63,6 @@ class BaseProcessor(object):
         else:
             versions = [version]
 
-        computed_versions = []
-
         for version in versions:
             item = self.client.release_data(name, version)
             url = self.client.release_urls(item["name"], item["version"])
@@ -96,9 +94,7 @@ class BaseProcessor(object):
                 "files": files,
             })
 
-            computed_versions.append(item)
-
-        return computed_versions
+            yield item
 
     def sync_release(self, release):
         # Get or Create Project
