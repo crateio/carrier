@@ -19,3 +19,24 @@ class InMemoryStore(BaseStore):
 
     def get(self, key):
         return self._data[key]
+
+
+class RedisStore(BaseStore):
+    def __init__(self, connection=None, prefix=None, *args, **kwargs):
+        super(RedisStore, self).__init__(*args, **kwargs)
+        import redis
+
+        self.redis = redis.StrictRedis(**connection)
+        self.prefix = prefix
+
+    def set(self, key, value):
+        if self.prefix is not None:
+            key = self.prefix + key
+
+        self.redis.set(key, value)
+
+    def get(self, key):
+        if self.prefix is not None:
+            key = self.prefix + key
+
+        return self.redis.get(key)
