@@ -5,6 +5,8 @@ import conveyor
 
 
 install_requires = [
+    "slumber",
+    "xmlrpc2",
 ]
 
 setup(
