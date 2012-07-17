@@ -22,11 +22,11 @@ class InMemoryStore(BaseStore):
 
 
 class RedisStore(BaseStore):
-    def __init__(self, connection=None, prefix=None, *args, **kwargs):
+    def __init__(self, url=None, prefix=None, *args, **kwargs):
         super(RedisStore, self).__init__(*args, **kwargs)
         import redis
 
-        self.redis = redis.StrictRedis(**connection)
+        self.redis = redis.from_url(url)
         self.prefix = prefix
 
     def set(self, key, value):
