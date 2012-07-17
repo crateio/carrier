@@ -243,4 +243,11 @@ class BaseProcessor(object):
 class BulkProcessor(BaseProcessor):
 
     def process(self):
-        pass
+        # @@@ Should we handle attempting to delete?
+        # @@@ Need to store completion time
+
+        names = set(self.client.list_packages())
+
+        for package in names:
+            for release in self.get_releases(package):
+                self.sync_release(release)
