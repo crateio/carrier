@@ -42,3 +42,7 @@ class Conveyor(object):
         else:
             # @@@ Normal Processor
             pass
+
+    @property
+    def previous_time(self):
+        return None
