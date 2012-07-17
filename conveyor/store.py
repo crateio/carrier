@@ -7,7 +7,7 @@ class BaseStore(object):
         raise NotImplementedError
 
 
-class InMemoryStore(object):
+class InMemoryStore(BaseStore):
 
     def __init__(self, *args, **kwargs):
         super(InMemoryStore, self).__init__(*args, **kwargs)
