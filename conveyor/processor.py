@@ -3,6 +3,7 @@ from __future__ import division
 
 import base64
 import collections
+import datetime
 import re
 
 import requests
@@ -76,6 +77,8 @@ class BaseProcessor(object):
 
             files = []
 
+            oldest = datetime.datetime.now()
+
             for url in urls:
                 data = url.copy()
 
@@ -86,12 +89,16 @@ class BaseProcessor(object):
                     # @@@ Catch the proper exceptions (and do what?)
                     raise
 
+                if oldest > data["upload_time"]:
+                    oldest = data["upload_time"]
+
                 data["file_data"] = resp.content
                 files.append(data)
 
             item.update({
                 "normalized": _normalize_regex.sub("-", item["name"]).lower(),
                 "files": files,
+                "guessed_creation": oldest,
             })
 
             yield item
@@ -209,6 +216,9 @@ class BaseProcessor(object):
         data["requires"] = [split_meta(req) for req in get(release, "requires_dist", [])]
         data["provides"] = [split_meta(req) for req in get(release, "provides_dist", [])]
         data["obsoletes"] = [split_meta(req) for req in get(release, "obsoletes_dist", [])]
+
+        if get(release, "guessed_creation", None) is not None:
+            data["created"] = release["guessed_creation"].isoformat()
 
         if extra is not None:
             data.update(extra)
