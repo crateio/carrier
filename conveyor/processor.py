@@ -253,7 +253,6 @@ class BulkProcessor(BaseProcessor):
 
     def process(self):
         # @@@ Should we handle attempting to delete?
-        # @@@ Need to store completion time
 
         current = time.mktime(datetime.datetime.utcnow().timetuple())
 
