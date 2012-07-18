@@ -15,7 +15,7 @@ class Conveyor(object):
 
         warehouse_url = urlparse.urlparse(warehouse_url)
         warehouse = (
-            [urlparse.urlunparse([warehouse_url.scheme, warehouse_url.hostname, warehouse_url.path, warehouse_url.params, warehouse_url.query, warehouse_url.fragment])],
+            [urlparse.urlunparse([warehouse_url.scheme, ":".join([str(x) for x in [warehouse_url.hostname, warehouse_url.port] if x]), warehouse_url.path, warehouse_url.params, warehouse_url.query, warehouse_url.fragment])],
             {
                 "auth": (warehouse_url.username, warehouse_url.password),
             },
