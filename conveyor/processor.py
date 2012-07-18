@@ -58,6 +58,8 @@ class BaseProcessor(object):
 
         if store is None:
             self.store = InMemoryStore()
+        else:
+            self.store = store
 
     def process(self):
         raise NotImplementedError
