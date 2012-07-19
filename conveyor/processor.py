@@ -263,7 +263,7 @@ class BulkProcessor(BaseProcessor):
                 if not self.store.get("pypi:process:bulk:%s:%s" % (release["name"], release["version"])):
                     print "Syncing", release["name"], release["version"]
                     self.sync_release(release)
-                    self.store.setex("pypi:process:bulk:%s:%s" % (release["name"], release["version"]), 604800)
+                    self.store.setex("pypi:process:bulk:%s:%s" % (release["name"], release["version"]), "synced", 604800)
                 else:
                     print "Skipping", release["name"], release["version"]
 
