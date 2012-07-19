@@ -4,6 +4,8 @@ from __future__ import division
 import base64
 import collections
 import datetime
+import hashlib
+import json
 import re
 import time
 
@@ -260,7 +262,10 @@ class BulkProcessor(BaseProcessor):
 
         for package in names:
             for release in self.get_releases(package):
-                if not self.store.get("pypi:process:bulk:%s:%s" % (release["name"], release["version"])):
+                stored_hash = self.store.get("pypi:process:bulk:%s:%s" % (release["name"], release["version"]))
+                computed_hash = hashlib.sha224(json.dumps(release))
+
+                if not stored_hash or stored_hash != computed_hash:
                     print "Syncing", release["name"], release["version"]
                     self.sync_release(release)
                     self.store.setex("pypi:process:bulk:%s:%s" % (release["name"], release["version"]), "synced", 604800)
