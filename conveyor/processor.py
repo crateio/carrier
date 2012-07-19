@@ -268,7 +268,7 @@ class BulkProcessor(BaseProcessor):
                 if not stored_hash or stored_hash != computed_hash:
                     print "Syncing", release["name"], release["version"]
                     self.sync_release(release)
-                    self.store.setex("pypi:process:%s:%s" % (release["name"], release["version"]), "synced", 604800)
+                    self.store.setex("pypi:process:%s:%s" % (release["name"], release["version"]), computed_hash, 604800)
                 else:
                     print "Skipping", release["name"], release["version"]
 
