@@ -103,7 +103,7 @@ class BaseProcessor(object):
                 if oldest > data["upload_time"]:
                     oldest = data["upload_time"]
 
-                data["file_data"] = resp.content
+                data["file_data"] = base64.b64encode(resp.content)
                 files.append(data)
 
             item.update({
@@ -238,7 +238,7 @@ class BaseProcessor(object):
 
     def to_warehouse_file(self, release, file, extra=None):
         data = {
-            "file": {"name": file["filename"], "file": base64.b64encode(file["file_data"])},
+            "file": {"name": file["filename"], "file": file["file_data"]},
             "created": file["upload_time"].isoformat(),
             "type": file["packagetype"],
             "python_version": file["python_version"],
