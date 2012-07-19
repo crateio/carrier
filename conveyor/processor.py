@@ -260,6 +260,11 @@ class BulkProcessor(BaseProcessor):
 
         for package in names:
             for release in self.get_releases(package):
-                self.sync_release(release)
+                if not self.store.get("pypi:process:bulk:%s:%s" % (release["name"], release["version"])):
+                    print "Syncing", release["name"], release["version"]
+                    self.sync_release(release)
+                    self.store.setex("pypi:process:bulk:%s:%s" % (release["name"], release["version"]), 604800)
+                else:
+                    print "Skipping", release["name"], release["version"]
 
         self.store.set("pypi:since", current)

@@ -17,6 +17,9 @@ class InMemoryStore(BaseStore):
     def set(self, key, value):
         self._data[key] = value
 
+    def setex(self, key, value, time):
+        self._data[key] = value
+
     def get(self, key):
         return self._data[key]
 
@@ -34,6 +37,12 @@ class RedisStore(BaseStore):
             key = self.prefix + key
 
         self.redis.set(key, value)
+
+    def setex(self, key, value, time):
+        if self.prefix is not None:
+            key = self.prefix + key
+
+        self.redis.setex(key, value, time)
 
     def get(self, key):
         if self.prefix is not None:
