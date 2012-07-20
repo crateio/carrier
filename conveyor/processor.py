@@ -149,12 +149,9 @@ class BaseProcessor(object):
             except slumber.exceptions.HttpClientError as e:
                 if not e.response.status_code == 404:
                     raise
-                try:
-                    data = self.to_warehouse_file(release, f, extra={"version": version["resource_uri"]})
-                    vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files.post(data)
-                except Exception as e:
-                    print e.response.content
-                    raise
+
+                data = self.to_warehouse_file(release, f, extra={"version": version["resource_uri"]})
+                vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files.post(data)
             else:
                 # @@@ Update File
                 pass
