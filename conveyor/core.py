@@ -44,7 +44,7 @@ class Conveyor(object):
                 time.sleep(999)
         except KeyboardInterrupt:
             logger.info("Shutting down Conveyor...")
-            self.scheduler.shutdown()
+            self.scheduler.shutdown(wait=False)
 
     def process(self):
         warehouse = slumber.API(
