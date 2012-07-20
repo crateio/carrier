@@ -39,8 +39,12 @@ class Conveyor(object):
         self.scheduler.add_interval_job(self.process, **self.config["conveyor"]["schedule"])
         self.scheduler.start()
 
-        while True:
-            time.sleep(5)
+        try:
+            while True:
+                time.sleep(999)
+        except KeyboardInterrupt:
+            logger.info("Shutting down Conveyor...")
+            self.scheduler.shutdown()
 
     def process(self):
         warehouse = slumber.API(
