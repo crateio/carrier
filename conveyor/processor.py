@@ -129,10 +129,10 @@ class BaseProcessor(object):
         computed_hash = hashlib.sha224(json.dumps(release, default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)).hexdigest()
 
         if stored_hash and stored_hash == computed_hash:
-            logger.info("Skipping %s version %s because it has not changed.", release["name"], release["version"])
+            logger.info("Skipping '%s' version '%s' because it has not changed.", release["name"], release["version"])
             return
 
-        logger.info("Syncing %s version %s with Warehouse.", release["name"], release["version"])
+        logger.info("Syncing '%s' version '%s'.", release["name"], release["version"])
 
         quoted_name = urllib.quote(release["normalized"], safe="")
         quoted_version = urllib.quote(release["version"], safe="")
