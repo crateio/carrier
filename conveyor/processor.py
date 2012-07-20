@@ -5,6 +5,7 @@ import base64
 import collections
 import datetime
 import hashlib
+import logging
 import json
 import re
 import time
@@ -17,6 +18,9 @@ import xmlrpc2.client
 
 _normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
 _distutils2_version_capture = re.compile("^(.*?)(?:\(([^()]+)\))?$")
+
+
+logger = logging.getLogger(__name__)
 
 
 def split_meta(meta):
