@@ -14,8 +14,6 @@ import requests
 import slumber.exceptions
 import xmlrpc2.client
 
-from conveyor.store import InMemoryStore
-
 
 _normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
 _distutils2_version_capture = re.compile("^(.*?)(?:\(([^()]+)\))?$")
@@ -42,9 +40,15 @@ def get(d, attr, default=None):
     return value
 
 
+def get_key(prefix, key):
+    if not prefix is None:
+        return "%s:%s" % (prefix, key)
+    return key
+
+
 class BaseProcessor(object):
 
-    def __init__(self, index, warehouse, session=None, store=None, *args, **kwargs):
+    def __init__(self, index, warehouse, session=None, store=None, store_prefix=None, *args, **kwargs):
         super(BaseProcessor, self).__init__(*args, **kwargs)
 
         if session is None:
@@ -54,11 +58,8 @@ class BaseProcessor(object):
 
         self.client = xmlrpc2.client.Client(index, session=self.session)
         self.warehouse = warehouse
-
-        if store is None:
-            self.store = InMemoryStore()
-        else:
-            self.store = store
+        self.store = store
+        self.store_prefix = store_prefix
 
     def process(self):
         raise NotImplementedError
@@ -259,14 +260,16 @@ class BulkProcessor(BaseProcessor):
 
         for package in names:
             for release in self.get_releases(package):
-                stored_hash = self.store.get("pypi:process:%s:%s" % (release["name"], release["version"]))
+                key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
+
+                stored_hash = self.store.get(key)
                 computed_hash = hashlib.sha224(json.dumps(release, default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)).hexdigest()
 
                 if not stored_hash or stored_hash != computed_hash:
                     print "Syncing", release["name"], release["version"]
                     self.sync_release(release)
-                    self.store.setex("pypi:process:%s:%s" % (release["name"], release["version"]), computed_hash, 604800)
+                    self.store.setex(key, computed_hash, 604800)
                 else:
                     print "Skipping", release["name"], release["version"]
 
-        self.store.set("pypi:since", current)
+        self.store.set(get_key(self.store_prefix, "pypi:since"), current)

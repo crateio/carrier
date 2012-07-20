@@ -33,6 +33,7 @@ class Conveyor(object):
         logging.config.dictConfig(self.config["logging"])
 
         self.scheduler = Scheduler()
+        self.redis = redis.StrictRedis(**self.config.get("redis", {}).get("connection", {}))
 
     def run(self):
         self.scheduler.add_interval_job(self.process, **self.config["conveyor"]["schedule"])
@@ -51,7 +52,12 @@ class Conveyor(object):
                     )
 
         processor_class = self.get_processor_class()
-        processor = processor_class(index=self.config["conveyor"]["index"], warehouse=warehouse)
+        processor = processor_class(
+                        index=self.config["conveyor"]["index"],
+                        warehouse=warehouse,
+                        store=self.redis,
+                        store_prefix=self.config.get("redis", {}).get("prefix", None)
+                    )
 
         processor.process()
 
