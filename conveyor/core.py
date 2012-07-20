@@ -2,37 +2,57 @@ from __future__ import absolute_import
 from __future__ import division
 
 
-import urlparse
+import logging
+import logging.config
+import time
+
+import redis
+import slumber
+import yaml
+
+from apscheduler.scheduler import Scheduler
 
 from conveyor.processor import BulkProcessor
 # @@@ Switch all Urls to SSL
 
 
+logger = logging.getLogger(__name__)
+
+
 class Conveyor(object):
 
-    def __init__(self, index_url, warehouse_url, store=None, *args, **kwargs):
+    def __init__(self, config_file=None, *args, **kwargs):
         super(Conveyor, self).__init__(*args, **kwargs)
 
-        warehouse_url = urlparse.urlparse(warehouse_url)
-        warehouse = (
-            [urlparse.urlunparse([warehouse_url.scheme, ":".join([str(x) for x in [warehouse_url.hostname, warehouse_url.port] if x]), warehouse_url.path, warehouse_url.params, warehouse_url.query, warehouse_url.fragment])],
-            {
-                "auth": (warehouse_url.username, warehouse_url.password),
-            },
-        )
+        if config_file is None:
+            config_file = "config.yml"
 
-        self.config = {
-            "index": index_url,
-            "warehouse": warehouse,
-            "store": store,
-        }
+        with open(config_file) as f:
+            self.config = yaml.safe_load(f.read())
+
+        logging.config.dictConfig(self.config["logging"])
+
+        self.scheduler = Scheduler()
 
     def run(self):
-        processor = self.get_processor_class()(
-                        index=self.config["index"],
-                        warehouse=self.config["warehouse"],
-                        store=self.config["store"],
+        self.scheduler.add_interval_job(self.process, **self.config["conveyor"]["schedule"])
+        self.scheduler.start()
+
+        while True:
+            time.sleep(5)
+
+    def process(self):
+        warehouse = slumber.API(
+                        self.config["conveyor"]["warehouse"]["url"],
+                        auth=(
+                            self.config["conveyor"]["warehouse"]["auth"]["username"],
+                            self.config["conveyor"]["warehouse"]["auth"]["password"],
+                        )
                     )
+
+        processor_class = self.get_processor_class()
+        processor = processor_class(index=self.config["conveyor"]["index"], warehouse=warehouse)
+
         processor.process()
 
     def get_processor_class(self):
@@ -41,7 +61,7 @@ class Conveyor(object):
             return BulkProcessor
         else:
             # @@@ Normal Processor
-            pass
+            raise Exception("Use Normal Processor")
 
     @property
     def previous_time(self):

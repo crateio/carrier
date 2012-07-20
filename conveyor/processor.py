@@ -11,7 +11,6 @@ import time
 
 import pytz
 import requests
-import slumber
 import slumber.exceptions
 import xmlrpc2.client
 
@@ -48,15 +47,13 @@ class BaseProcessor(object):
     def __init__(self, index, warehouse, session=None, store=None, *args, **kwargs):
         super(BaseProcessor, self).__init__(*args, **kwargs)
 
-        wargs, wkwargs = warehouse
-
         if session is None:
             session = requests.session()
 
         self.session = session
 
         self.client = xmlrpc2.client.Client(index, session=self.session)
-        self.warehouse = slumber.API(*wargs, **wkwargs)
+        self.warehouse = warehouse
 
         if store is None:
             self.store = InMemoryStore()
