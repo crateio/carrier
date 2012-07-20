@@ -9,7 +9,6 @@ import logging
 import json
 import re
 import time
-import urllib
 
 import pytz
 import requests
@@ -134,12 +133,9 @@ class BaseProcessor(object):
 
         logger.info("Syncing '%s' version '%s'.", release["name"], release["version"])
 
-        quoted_name = urllib.quote(release["normalized"], safe="")
-        quoted_version = urllib.quote(release["version"], safe="")
-
         # Get or Create Project
         try:
-            project = self.warehouse.projects(quoted_name).get()
+            project = self.warehouse.projects(release["normalized"]).get()
         except slumber.exceptions.HttpClientError as e:
             if not e.response.status_code == 404:
                 raise
@@ -152,28 +148,26 @@ class BaseProcessor(object):
 
         # Get or Create Version
         try:
-            version = self.warehouse.projects(quoted_name).versions(quoted_version).get()
+            version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get()
         except slumber.exceptions.HttpClientError as e:
             if not e.response.status_code == 404:
                 raise
 
             data = self.to_warehouse_version(release, extra={"project": project["resource_uri"]})
-            version = self.warehouse.projects(quoted_name).versions().post(data)
+            version = self.warehouse.projects(release["normalized"]).versions().post(data)
         else:
             # @@@ Update Version
             pass
 
         for f in release["files"]:
-            quoted_filename = urllib.quote(f["filename"], safe="")
-
             try:
-                vfile = self.warehouse.projects(quoted_name).versions(quoted_version).files(quoted_filename).get()
+                vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files(f["filename"]).get()
             except slumber.exceptions.HttpClientError as e:
                 if not e.response.status_code == 404:
                     raise
 
                 data = self.to_warehouse_file(release, f, extra={"version": version["resource_uri"]})
-                vfile = self.warehouse.projects(quoted_name).versions(quoted_version).files.post(data)
+                vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files.post(data)
             else:
                 # @@@ Update File
                 pass
