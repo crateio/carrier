@@ -117,6 +117,17 @@ class BaseProcessor(object):
             yield item
 
     def sync_release(self, release):
+        key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
+
+        stored_hash = self.store.get(key)
+        computed_hash = hashlib.sha224(json.dumps(release, default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)).hexdigest()
+
+        if stored_hash and stored_hash == computed_hash:
+            logger.info("Skipping %s version %s because it has not changed.", release["name"], release["version"])
+            return
+
+        logger.info("Syncing %s version %s with Warehouse.", release["name"], release["version"])
+
         # Get or Create Project
         try:
             project = self.warehouse.projects(release["normalized"]).get()
@@ -155,6 +166,8 @@ class BaseProcessor(object):
             else:
                 # @@@ Update File
                 pass
+
+        self.store.setex(key, computed_hash, 604800)
 
     def to_warehouse_project(self, release, extra=None):
         data = {"name": release["name"]}
@@ -261,16 +274,6 @@ class BulkProcessor(BaseProcessor):
 
         for package in names:
             for release in self.get_releases(package):
-                key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
-
-                stored_hash = self.store.get(key)
-                computed_hash = hashlib.sha224(json.dumps(release, default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)).hexdigest()
-
-                if not stored_hash or stored_hash != computed_hash:
-                    print "Syncing", release["name"], release["version"]
-                    self.sync_release(release)
-                    self.store.setex(key, computed_hash, 604800)
-                else:
-                    print "Skipping", release["name"], release["version"]
+                self.sync_release(release)
 
         self.store.set(get_key(self.store_prefix, "pypi:since"), current)
