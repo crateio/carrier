@@ -167,7 +167,7 @@ class BaseProcessor(object):
                 # @@@ Update File
                 pass
 
-        self.store.setex(key, computed_hash, 604800)
+        self.store.setex(key, 604800, computed_hash)
 
     def to_warehouse_project(self, release, extra=None):
         data = {"name": release["name"]}
