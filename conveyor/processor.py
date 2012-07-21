@@ -356,3 +356,25 @@ class BulkProcessor(BaseProcessor):
         self.store.set(get_key(self.store_prefix, "pypi:since"), current)
 
         logger.info("Bulk Synchronize Complete")
+
+
+class ChangedProcessor(BaseProcessor):
+
+    def process(self):
+        # @@@ Handle Deletion
+
+        logger.info("Starting changed projects synchronization")
+
+        current = time.mktime(datetime.datetime.utcnow().timetuple())
+
+        since = int(float(self.store.get(get_key(self.store_prefix, "pypi:since")))) - 10
+
+        names = set([(c[0], c[1]) for c in self.client.changelog(since)])
+
+        for package in names:
+            for release in self.get_releases(package[0], version=package[1]):
+                self.sync_release(release)
+
+        self.store.set(get_key(self.store_prefix, "pypi:since"), current)
+
+        logger.info("Finished changed projects synchronization")
