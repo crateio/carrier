@@ -211,7 +211,7 @@ class BaseProcessor(object):
             "author": {},
             "maintainer": {},
 
-            "classifiers": get(release, "classifiers"),
+            "classifiers": get(release, "classifiers", []),
             "uris": {},
 
             "requires_python": get(release, "requires_python", ""),
