@@ -213,7 +213,7 @@ class BaseProcessor(object):
                     self.warehouse.projects(release["normalized"]).versions(release["version"]).files(f["filename"]).put(file_data)
                     vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files(f["filename"]).get()
 
-        self.store.setex(key, 604800, computed_hash)
+        self.store.set(key, computed_hash)
 
     def to_warehouse_project(self, release, extra=None):
         data = {"name": release["name"]}
