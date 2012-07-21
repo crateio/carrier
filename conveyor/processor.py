@@ -116,8 +116,10 @@ class BaseProcessor(object):
             item.update({
                 "normalized": _normalize_regex.sub("-", item["name"]).lower(),
                 "files": files,
-                "guessed_creation": oldest,
             })
+
+            if files:
+                item.update["guessed_creation"] = oldest
 
             yield item
 
