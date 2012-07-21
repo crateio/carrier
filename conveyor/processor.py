@@ -25,7 +25,7 @@ _distutils2_version_capture = re.compile("^(.*?)(?:\(([^()]+)\))?$")
 logger = logging.getLogger(__name__)
 
 
-EXPECTED = set(["resource_uri", "yanked", "downloads"])
+EXPECTED = set(["resource_uri", "yanked", "downloads", "modified"])
 
 
 def split_meta(meta):
@@ -178,17 +178,33 @@ class BaseProcessor(object):
                 version = self.warehouse.projects(release["normalized"]).versions(release["version"]).put(version_data)
 
         for f in release["files"]:
+            file_data = self.to_warehouse_file(release, f, extra={"version": version["resource_uri"]})
+
             try:
+                # Get
                 vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files(f["filename"]).get()
             except slumber.exceptions.HttpClientError as e:
                 if not e.response.status_code == 404:
                     raise
 
-                data = self.to_warehouse_file(release, f, extra={"version": version["resource_uri"]})
-                vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files.post(data)
+                # Create
+                vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files.post(file_data)
             else:
-                # @@@ Update File
-                pass
+                # Update
+                diff = DictDiffer(file_data, vfile)
+
+                if diff.added() or diff.changed() - set(["file"]) or diff.removed() - EXPECTED:
+                    logger.info(
+                        "Updating the file '%s' for '%s' version '%s'. added: '%s' changed: '%s' removed: '%s'",
+                        f["filename"],
+                        release["name"],
+                        release["version"],
+                        ",".join(diff.added()),
+                        ",".join(diff.changed() - set(["file"])),
+                        ",".join(diff.removed() - EXPECTED),
+                    )
+                    self.warehouse.projects(release["normalized"]).versions(release["version"]).files(f["filename"]).put(file_data)
+                    vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files(f["filename"]).get()
 
         self.store.setex(key, 604800, computed_hash)
 
@@ -297,6 +313,17 @@ class BaseProcessor(object):
             "python_version": file["python_version"],
             "comment": file["comment_text"],
         }
+
+        raw_data = base64.b64decode(file["file_data"])
+
+        data.update({
+            "digests": {
+                "md5": hashlib.md5(raw_data).hexdigest(),
+                "sha256": hashlib.sha256(raw_data).hexdigest(),
+            },
+            "filesize": len(raw_data),
+            "filename": file["filename"],
+        })
 
         if extra is not None:
             data.update(extra)
