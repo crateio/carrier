@@ -343,7 +343,7 @@ class BulkProcessor(BaseProcessor):
     def process(self):
         # @@@ Should we handle attempting to delete?
 
-        logger.info("Starting Bulk Synchronize")
+        logger.info("Starting bulk projects synchronization")
 
         current = time.mktime(datetime.datetime.utcnow().timetuple())
 
@@ -355,7 +355,7 @@ class BulkProcessor(BaseProcessor):
 
         self.store.set(get_key(self.store_prefix, "pypi:since"), current)
 
-        logger.info("Bulk Synchronize Complete")
+        logger.info("Finished bulk projects synchronization")
 
 
 class ChangedProcessor(BaseProcessor):
