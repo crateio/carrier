@@ -15,12 +15,17 @@ import requests
 import slumber.exceptions
 import xmlrpc2.client
 
+from conveyor.utils import DictDiffer
+
 
 _normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
 _distutils2_version_capture = re.compile("^(.*?)(?:\(([^()]+)\))?$")
 
 
 logger = logging.getLogger(__name__)
+
+
+EXPECTED = set(["resource_uri", "yanked", "downloads"])
 
 
 def split_meta(meta):
@@ -135,29 +140,42 @@ class BaseProcessor(object):
 
         # Get or Create Project
         try:
+            # Get
             project = self.warehouse.projects(release["normalized"]).get()
         except slumber.exceptions.HttpClientError as e:
             if not e.response.status_code == 404:
                 raise
 
-            data = self.to_warehouse_project(release)
-            project = self.warehouse.projects.post(data)
-        else:
-            # @@@ Update project
-            pass
+            # Create
+            project_data = self.to_warehouse_project(release)
+            project = self.warehouse.projects.post(project_data)
 
         # Get or Create Version
+        version_data = self.to_warehouse_version(release, extra={"project": project["resource_uri"]})
+
         try:
+            # GET
             version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get()
         except slumber.exceptions.HttpClientError as e:
             if not e.response.status_code == 404:
                 raise
 
-            data = self.to_warehouse_version(release, extra={"project": project["resource_uri"]})
-            version = self.warehouse.projects(release["normalized"]).versions().post(data)
+            # Create
+            version = self.warehouse.projects(release["normalized"]).versions().post(version_data)
         else:
-            # @@@ Update Version
-            pass
+            # Update
+            diff = DictDiffer(version_data, version)
+
+            if diff.added() or diff.changed() or diff.removed() - (EXPECTED | set(["files"])):
+                logger.info(
+                    "Updating the version for '%s' version '%s'. added: '%s' changed: '%s' removed: '%s'",
+                    release["name"],
+                    release["version"],
+                    ",".join(diff.added()),
+                    ",".join(diff.changed()),
+                    ",".join(diff.removed() - (EXPECTED | set(["files"]))),
+                )
+                version = self.warehouse.projects(release["normalized"]).versions(release["version"]).put(version_data)
 
         for f in release["files"]:
             try:
