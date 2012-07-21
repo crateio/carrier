@@ -126,7 +126,7 @@ class BaseProcessor(object):
     def sync_release(self, release):
         if "/" in release["version"]:
             # We cannot accept versions with a / in it.
-            logger.warning("Skipping '%s' version '%s' because it contains a '/'", release["name"], release["version"])
+            logger.error("Skipping '%s' version '%s' because it contains a '/'", release["name"], release["version"])
             return
 
         key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
