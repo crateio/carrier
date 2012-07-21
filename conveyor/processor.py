@@ -208,21 +208,31 @@ class BaseProcessor(object):
             "description": get(release, "description", ""),
             "license": get(release, "license", ""),
 
-            "author": {
-                "name": get(release, "author", ""),
-                "email": get(release, "author_email", ""),
-            },
-            "maintainer": {
-                "name": get(release, "maintainer", ""),
-                "email": get(release, "maintainer_email", ""),
-            },
+            "author": {},
+            "maintainer": {},
 
             "classifiers": get(release, "classifiers"),
             "uris": {},
 
             "requires_python": get(release, "requires_python", ""),
             "requires_external": get(release, "requires_external", []),
+
+            "platforms": [],
+            "supported_platforms": [],
+            "keywords": [],
         }
+
+        if get(release, "author", None):
+            data["author"]["name"] = release["author"]
+
+        if get(release, "author_email", None):
+            data["author"]["email"] = release["author_email"]
+
+        if get(release, "maintainer", None):
+            data["maintainer"]["name"] = release["maintainer"]
+
+        if get(release, "maintainer_email", None):
+            data["maintainer"]["email"] = release["maintainer_email"]
 
         if get(release, "download_url"):
             data["uris"]["Download"] = release["download_url"]
@@ -243,6 +253,14 @@ class BaseProcessor(object):
                 platforms = [platforms]
 
             data["platforms"] = platforms
+
+        if get(release, "supported_platforms"):
+            supported_platforms = get(release, "supported_platforms")
+
+            if isinstance(supported_platforms, basestring):
+                supported_platforms = [supported_platforms]
+
+            data["supported_platforms"] = supported_platforms
 
         if get(release, "keywords"):
             keywords = get(release, "keywords")
