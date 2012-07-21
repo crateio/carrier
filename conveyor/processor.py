@@ -119,7 +119,7 @@ class BaseProcessor(object):
             })
 
             if files:
-                item.update["guessed_creation"] = oldest
+                item["guessed_creation"] = oldest
 
             yield item
 
