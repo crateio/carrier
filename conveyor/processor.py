@@ -167,6 +167,10 @@ class BaseProcessor(object):
             diff = DictDiffer(version_data, version)
             different = diff.added() | diff.changed() | diff.removed() - (EXPECTED | set(["files"]))
 
+            if "created" in different and not version.get("files", None):
+                # The created time is a guess because we don't have any uploaded files
+                different.remove("created")
+
             if different:
                 logger.info(
                     "Updating the version for '%s' version '%s'. warehouse: '%s' updated: '%s'",
