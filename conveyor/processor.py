@@ -165,15 +165,15 @@ class BaseProcessor(object):
         else:
             # Update
             diff = DictDiffer(version_data, version)
+            different = diff.added() | diff.changed() | diff.removed() - (EXPECTED | set(["files"]))
 
-            if diff.added() or diff.changed() or diff.removed() - (EXPECTED | set(["files"])):
+            if different:
                 logger.info(
-                    "Updating the version for '%s' version '%s'. added: '%s' changed: '%s' removed: '%s'",
+                    "Updating the version for '%s' version '%s'. warehouse: '%s' updated: '%s'",
                     release["name"],
                     release["version"],
-                    ",".join(diff.added()),
-                    ",".join(diff.changed()),
-                    ",".join(diff.removed() - (EXPECTED | set(["files"]))),
+                    dict([(k, v) for k, v in version if k in different]),
+                    dict([(k, v) for k, v in version_data if k in different]),
                 )
                 self.warehouse.projects(release["normalized"]).versions(release["version"]).put(version_data)
                 version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get()
@@ -193,16 +193,16 @@ class BaseProcessor(object):
             else:
                 # Update
                 diff = DictDiffer(file_data, vfile)
+                different = diff.added() | (diff.changed() - set(["file"])) | (diff.removed() - EXPECTED)
 
-                if diff.added() or diff.changed() - set(["file"]) or diff.removed() - EXPECTED:
+                if different:
                     logger.info(
-                        "Updating the file '%s' for '%s' version '%s'. added: '%s' changed: '%s' removed: '%s'",
+                        "Updating the file '%s' for '%s' version '%s'. warehouse: '%s' updated: '%s'",
                         f["filename"],
                         release["name"],
                         release["version"],
-                        ",".join(diff.added()),
-                        ",".join(diff.changed() - set(["file"])),
-                        ",".join(diff.removed() - EXPECTED),
+                        dict([(k, v) for k, v in vfile if k in different]),
+                        dict([(k, v) for k, v in file_data if k in different]),
                     )
                     self.warehouse.projects(release["normalized"]).versions(release["version"]).files(f["filename"]).put(file_data)
                     vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files(f["filename"]).get()
