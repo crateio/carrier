@@ -172,8 +172,8 @@ class BaseProcessor(object):
                     "Updating the version for '%s' version '%s'. warehouse: '%s' updated: '%s'",
                     release["name"],
                     release["version"],
-                    dict([(k, v) for k, v in version if k in different]),
-                    dict([(k, v) for k, v in version_data if k in different]),
+                    dict([(k, v) for k, v in version.items() if k in different]),
+                    dict([(k, v) for k, v in version_data.items() if k in different]),
                 )
                 self.warehouse.projects(release["normalized"]).versions(release["version"]).put(version_data)
                 version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get()
@@ -201,8 +201,8 @@ class BaseProcessor(object):
                         f["filename"],
                         release["name"],
                         release["version"],
-                        dict([(k, v) for k, v in vfile if k in different]),
-                        dict([(k, v) for k, v in file_data if k in different]),
+                        dict([(k, v) for k, v in vfile.items() if k in different]),
+                        dict([(k, v) for k, v in file_data.items() if k in different]),
                     )
                     self.warehouse.projects(release["normalized"]).versions(release["version"]).files(f["filename"]).put(file_data)
                     vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files(f["filename"]).get()
