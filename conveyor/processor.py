@@ -175,7 +175,8 @@ class BaseProcessor(object):
                     ",".join(diff.changed()),
                     ",".join(diff.removed() - (EXPECTED | set(["files"]))),
                 )
-                version = self.warehouse.projects(release["normalized"]).versions(release["version"]).put(version_data)
+                self.warehouse.projects(release["normalized"]).versions(release["version"]).put(version_data)
+                version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get()
 
         for f in release["files"]:
             file_data = self.to_warehouse_file(release, f, extra={"version": version["resource_uri"]})
