@@ -184,6 +184,9 @@ class BaseProcessor(object):
                 self.warehouse.projects(release["normalized"]).versions(release["version"]).put(version_data)
                 version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get()
 
+        # @@@ Check warehouse for a list of files that this version has and delete any ones
+        #      that no longer exist.
+
         for f in release["files"]:
             file_data = self.to_warehouse_file(release, f, extra={"version": version["resource_uri"]})
 
