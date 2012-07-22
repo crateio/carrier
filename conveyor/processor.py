@@ -375,17 +375,33 @@ class BaseProcessor(object):
         self.store.delete(key)
         self.warehouse.projects(normalized).versions(version).delete()
 
+    def delete_project(self, project):
+        normalized = _normalize_regex.sub("-", project).lower()
+        search_key = get_key(self.store_prefix, "pypi:process:%s:*" % project)
+
+        logger.info("Deleting %s", project)
+
+        for k in self.store.keys(search_key):
+            self.store.delete(k)
+
+        self.warehouse.projects(normalized).delete()
+
 
 class BulkProcessor(BaseProcessor):
 
     def process(self):
-        # @@@ Should we handle attempting to delete?
-
         logger.info("Starting bulk projects synchronization")
 
         current = time.mktime(datetime.datetime.utcnow().timetuple())
 
+        warehouse_projects = set([x["name"] for x in self.warehouse.projects.get(fields="name", limit=100000)["objects"]])
+
         names = set(self.client.list_packages())
+
+        deleted_projects = warehouse_projects - names
+
+        for project in deleted_projects:
+            self.delete_project(project)
 
         for package in names:
             warehouse_releases = self.get_warehouse_releases(package)
