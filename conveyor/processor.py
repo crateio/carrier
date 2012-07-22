@@ -372,6 +372,8 @@ class BaseProcessor(object):
         normalized = _normalize_regex.sub("-", package).lower()
         key = get_key(self.store_prefix, "pypi:process:%s:%s" % (package, version))
 
+        logger.info("Deleting version '%s' of '%s'", version, package)
+
         self.store.delete(key)
         self.warehouse.projects(normalized).versions(version).delete()
 
@@ -379,7 +381,7 @@ class BaseProcessor(object):
         normalized = _normalize_regex.sub("-", project).lower()
         search_key = get_key(self.store_prefix, "pypi:process:%s:*" % project)
 
-        logger.info("Deleting %s", project)
+        logger.info("Deleting '%s'", project)
 
         for k in self.store.keys(search_key):
             self.store.delete(k)
