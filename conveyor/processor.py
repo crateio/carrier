@@ -25,7 +25,7 @@ _distutils2_version_capture = re.compile("^(.*?)(?:\(([^()]+)\))?$")
 logger = logging.getLogger(__name__)
 
 
-EXPECTED = set(["resource_uri", "yanked", "downloads", "modified"])
+EXPECTED = set(["resource_uri", "downloads", "modified"])
 
 
 def split_meta(meta):
@@ -257,6 +257,8 @@ class BaseProcessor(object):
             "platforms": [],
             "supported_platforms": [],
             "keywords": [],
+
+            "yanked": False,
         }
 
         if get(release, "author", None):
@@ -333,6 +335,8 @@ class BaseProcessor(object):
             "type": file["packagetype"],
             "python_version": file["python_version"],
             "comment": file["comment_text"],
+
+            "yanked": False,
         }
 
         raw_data = base64.b64decode(file["file_data"])
@@ -351,6 +355,26 @@ class BaseProcessor(object):
 
         return data
 
+    def get_warehouse_releases(self, package):
+        normalized = _normalize_regex.sub("-", package).lower()
+
+        try:
+            project = self.warehouse.projects(normalized).get(full=True)
+        except slumber.exceptions.HttpClientError as e:
+            if not e.response.status_code == 404:
+                raise
+
+            return set()
+
+        return set([x["version"] for x in project["versions"]])
+
+    def delete_project_version(self, package, version):
+        normalized = _normalize_regex.sub("-", package).lower()
+        key = get_key(self.store_prefix, "pypi:process:%s:%s" % (package, version))
+
+        self.store.delete(key)
+        self.warehouse.projects(normalized).versions(version).delete()
+
 
 class BulkProcessor(BaseProcessor):
 
@@ -364,8 +388,17 @@ class BulkProcessor(BaseProcessor):
         names = set(self.client.list_packages())
 
         for package in names:
+            warehouse_releases = self.get_warehouse_releases(package)
+            local_releases = set()
+
             for release in self.get_releases(package):
+                local_releases.add(release["version"])
                 self.sync_release(release)
+
+            deleted = warehouse_releases - local_releases
+
+            for version in deleted:
+                self.delete_project_version(package, version)
 
         self.store.set(get_key(self.store_prefix, "pypi:since"), current)
 
