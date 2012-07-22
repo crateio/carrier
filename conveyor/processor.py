@@ -187,6 +187,17 @@ class BaseProcessor(object):
         # @@@ Check warehouse for a list of files that this version has and delete any ones
         #      that no longer exist.
 
+        _version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get(full=True)
+
+        warehouse_files = set([x["filename"] for x in _version["files"]])
+        local_files = set([x["filename"] for x in release["files"]])
+
+        deleted = warehouse_files - local_files
+
+        for filename in deleted:
+            logger.info("Deleting the file '%s' from '%s' version '%s'", filename, release["name"], release["version"])
+            self.warehouse.projects(release["normalized"]).versions(release["version"]).files(filename).delete()
+
         for f in release["files"]:
             file_data = self.to_warehouse_file(release, f, extra={"version": version["resource_uri"]})
 
