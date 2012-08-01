@@ -32,10 +32,10 @@ class Conveyor(object):
 
         logging.config.dictConfig(self.config["logging"])
 
-        self.scheduler = Scheduler()
         self.redis = redis.StrictRedis(**self.config.get("redis", {}).get("connection", {}))
 
     def run(self):
+        self.scheduler = Scheduler()
         self.scheduler.add_interval_job(self.process, **self.config["conveyor"]["schedule"])
         self.scheduler.start()
 
