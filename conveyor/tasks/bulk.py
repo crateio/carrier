@@ -62,6 +62,9 @@ def handle_job(name):
                         store_prefix=app.config.get("redis", {}).get("prefix", None)
                     )
 
+        # Process the Name
+        processor.get_or_create_project(name)
+
         for release in processor.get_releases(name):
             processor.sync_release(release)
     except Exception as e:
