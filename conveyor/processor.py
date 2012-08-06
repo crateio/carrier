@@ -55,10 +55,10 @@ def get_key(prefix, key):
     return key
 
 
-class BaseProcessor(object):
+class Processor(object):
 
     def __init__(self, index, warehouse, session=None, store=None, store_prefix=None, *args, **kwargs):
-        super(BaseProcessor, self).__init__(*args, **kwargs)
+        super(Processor, self).__init__(*args, **kwargs)
 
         if session is None:
             session = requests.session()
@@ -69,9 +69,6 @@ class BaseProcessor(object):
         self.warehouse = warehouse
         self.store = store
         self.store_prefix = store_prefix
-
-    def process(self):
-        raise NotImplementedError
 
     def get_releases(self, name, version=None):
         if version is None:
@@ -386,9 +383,6 @@ class BaseProcessor(object):
             self.store.delete(k)
 
         self.warehouse.projects(normalized).delete()
-
-
-class ChangedProcessor(BaseProcessor):
 
     def process(self):
         # @@@ Handle Deletion
