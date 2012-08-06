@@ -12,7 +12,6 @@ import yaml
 
 from apscheduler.scheduler import Scheduler
 
-from conveyor.processor import BulkProcessor
 # @@@ Switch all Urls to SSL
 
 
@@ -68,7 +67,7 @@ class Conveyor(object):
     def get_processor_class(self):
         if self.previous_time is None:
             # This is the first time we've ran so we need to do a bulk import
-            return BulkProcessor
+            raise Exception("Bulk import must be run prior to running Conveyor.")
         else:
             # @@@ Normal Processor
             raise Exception("Use Normal Processor")

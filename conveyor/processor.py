@@ -389,40 +389,6 @@ class BaseProcessor(object):
         self.warehouse.projects(normalized).delete()
 
 
-class BulkProcessor(BaseProcessor):
-
-    def process(self):
-        logger.info("Starting bulk projects synchronization")
-
-        current = time.mktime(datetime.datetime.utcnow().timetuple())
-
-        warehouse_projects = set([x["name"] for x in self.warehouse.projects.get(fields="name", limit=100000)["objects"]])
-
-        names = set(self.client.list_packages())
-
-        deleted_projects = warehouse_projects - names
-
-        for project in deleted_projects:
-            self.delete_project(project)
-
-        for package in names:
-            warehouse_releases = self.get_warehouse_releases(package)
-            local_releases = set()
-
-            for release in self.get_releases(package):
-                local_releases.add(release["version"])
-                self.sync_release(release)
-
-            deleted = warehouse_releases - local_releases
-
-            for version in deleted:
-                self.delete_project_version(package, version)
-
-        self.store.set(get_key(self.store_prefix, "pypi:since"), current)
-
-        logger.info("Finished bulk projects synchronization")
-
-
 class ChangedProcessor(BaseProcessor):
 
     def process(self):
