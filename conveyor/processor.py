@@ -121,6 +121,17 @@ class Processor(object):
             if files:
                 item["guessed_creation"] = oldest
 
+            # Clean up some of the fields that we don't use
+            remove_fields = set([
+                "_pypi_hidden",
+                "_pypi_ordering",
+                "cheesecake_code_kwalitee_id",
+                "cheesecake_documentation_id",
+                "cheesecake_installability_id",
+            ])
+
+            item = dict([(k, v) for k, v in item.items() if k not in remove_fields])
+
             yield item
 
     def get_or_create_project(self, project):
