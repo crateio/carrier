@@ -152,13 +152,26 @@ class Processor(object):
         return project
 
     def release_changed(self, release):
+        def _dict_constant_data_structure(dictionary):
+            data = []
+
+            for k, v in dictionary.items():
+                if isinstance(v, dict):
+                    v = _dict_constant_data_structure(v)
+                elif isinstance(v, set):
+                    v = sorted(v)
+                data.append([k, v])
+
+            return sorted(data, key=lambda x: x[0])
+
         key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
 
         # @@@ Note this doesn't handle the fact that dictionaries can have different key orders.
         #      How can we solve this?
+        data = _dict_constant_data_structure(release)
 
         stored_hash = self.store.get(key)
-        computed_hash = hashlib.sha512(json.dumps(release, default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)).hexdigest()[:32]
+        computed_hash = hashlib.sha512(json.dumps(data, default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)).hexdigest()[:32]
 
         return not (stored_hash and stored_hash == computed_hash)
 
