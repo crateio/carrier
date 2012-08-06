@@ -143,6 +143,9 @@ class Processor(object):
     def release_changed(self, release):
         key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
 
+        # @@@ Note this doesn't handle the fact that dictionaries can have different key orders.
+        #      How can we solve this?
+
         stored_hash = self.store.get(key)
         computed_hash = hashlib.sha512(json.dumps(release, default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)).hexdigest()[:32]
 
