@@ -140,18 +140,21 @@ class Processor(object):
 
         return project
 
+    def release_changed(self, release):
+        key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
+
+        stored_hash = self.store.get(key)
+        computed_hash = hashlib.sha224(json.dumps(release, default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)).hexdigest()
+
+        return not (stored_hash and stored_hash == computed_hash)
+
     def sync_release(self, release):
         if "/" in release["version"]:
             # We cannot accept versions with a / in it.
             logger.error("Skipping '%s' version '%s' because it contains a '/'", release["name"], release["version"])
             return
 
-        key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
-
-        stored_hash = self.store.get(key)
-        computed_hash = hashlib.sha224(json.dumps(release, default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)).hexdigest()
-
-        if stored_hash and stored_hash == computed_hash:
+        if not self.release_changed:
             logger.info("Skipping '%s' version '%s' because it has not changed", release["name"], release["version"])
             return
 
