@@ -144,7 +144,7 @@ class Processor(object):
         key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
 
         stored_hash = self.store.get(key)
-        computed_hash = hashlib.sha224(json.dumps(release, default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)).hexdigest()
+        computed_hash = hashlib.sha512(json.dumps(release, default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)).hexdigest()[:32]
 
         return not (stored_hash and stored_hash == computed_hash)
 
