@@ -123,6 +123,23 @@ class BaseProcessor(object):
 
             yield item
 
+    def get_or_create_project(self, project):
+        normalized = _normalize_regex.sub("-", project).lower()
+
+        # Get or Create Project
+        try:
+            # Get
+            project = self.warehouse.projects(normalized).get()
+        except slumber.exceptions.HttpClientError as e:
+            if not e.response.status_code == 404:
+                raise
+
+            # Create
+            project_data = {"name": project}
+            project = self.warehouse.projects.post(project_data)
+
+        return project
+
     def sync_release(self, release):
         if "/" in release["version"]:
             # We cannot accept versions with a / in it.
@@ -140,17 +157,7 @@ class BaseProcessor(object):
 
         logger.info("Syncing '%s' version '%s'", release["name"], release["version"])
 
-        # Get or Create Project
-        try:
-            # Get
-            project = self.warehouse.projects(release["normalized"]).get()
-        except slumber.exceptions.HttpClientError as e:
-            if not e.response.status_code == 404:
-                raise
-
-            # Create
-            project_data = self.to_warehouse_project(release)
-            project = self.warehouse.projects.post(project_data)
+        project = self.get_or_create_project(release["name"])
 
         # Get or Create Version
         version_data = self.to_warehouse_version(release, extra={"project": project["resource_uri"]})
@@ -228,14 +235,6 @@ class BaseProcessor(object):
                     vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files(f["filename"]).get()
 
         self.store.set(key, computed_hash)
-
-    def to_warehouse_project(self, release, extra=None):
-        data = {"name": release["name"]}
-
-        if extra is not None:
-            data.update(extra)
-
-        return data
 
     def to_warehouse_version(self, release, extra=None):
         data = {
