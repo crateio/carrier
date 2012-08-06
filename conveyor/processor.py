@@ -90,6 +90,9 @@ class Processor(object):
             else:
                 raise RuntimeError("Do not understand the type returned by release_urls")
 
+            # fix classifiers
+            item["classifiers"] = sorted(list(set(get(item, "classifiers", []))))
+
             files = []
 
             oldest = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
