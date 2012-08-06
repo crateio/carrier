@@ -5,7 +5,7 @@ import time
 import slumber
 
 from conveyor.core import Conveyor
-from conveyor.processor import get_key
+from conveyor.processor import Processor, get_key
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +24,7 @@ def get_jobs(last=0):
                                 app.config["conveyor"]["warehouse"]["auth"]["password"],
                             )
                         )
-        processor_class = app.get_processor_class()
-        processor = processor_class(
+        processor = Processor(
                         index=app.config["conveyor"]["index"],
                         warehouse=warehouse,
                         store=app.redis,
@@ -54,8 +53,7 @@ def handle_job(name):
                                 app.config["conveyor"]["warehouse"]["auth"]["password"],
                             )
                         )
-        processor_class = app.get_processor_class()
-        processor = processor_class(
+        processor = Processor(
                         index=app.config["conveyor"]["index"],
                         warehouse=warehouse,
                         store=app.redis,
