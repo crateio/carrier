@@ -212,6 +212,7 @@ class Processor(object):
             version = self.warehouse.projects(release["normalized"]).versions().post(version_data)
         else:
             # Update
+            version["classifiers"] = sorted(version["classifiers"])
             diff = DictDiffer(version_data, version)
             different = diff.added() | diff.changed() | diff.removed() - (EXPECTED | set(["files"]))
 
