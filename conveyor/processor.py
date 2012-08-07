@@ -251,10 +251,8 @@ class Processor(object):
         return vfile
 
     def sync_files(self, release, version):
-        _version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get(full=True)
-
         # Determine if any files need to be deleted
-        warehouse_files = set([x["filename"] for x in _version["files"]])
+        warehouse_files = set([f["filename"] for f in self.warehouse.projects(release["normalized"]).versions(release["version"]).files().get(limit=10000)["objects"]])
         local_files = set([x["filename"] for x in release["files"]])
         deleted = warehouse_files - local_files
 
