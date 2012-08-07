@@ -219,6 +219,52 @@ class Processor(object):
 
         return self._computed_hash
 
+    def get_and_update_or_create_file(self, release, version, distribution):
+        file_data = self.to_warehouse_file(release, distribution, extra={"version": version["resource_uri"]})
+
+        try:
+            # Get
+            vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files(distribution["filename"]).get()
+        except slumber.exceptions.HttpClientError as e:
+            if not e.response.status_code == 404:
+                raise
+
+            # Create
+            vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files.post(file_data)
+        else:
+            # Update
+            diff = DictDiffer(file_data, vfile)
+            different = diff.added() | (diff.changed() - set(["file"])) | (diff.removed() - EXPECTED)
+
+            if different:
+                logger.info(
+                    "Updating the file '%s' for '%s' version '%s'. warehouse: '%s' updated: '%s'",
+                    distribution["filename"],
+                    release["name"],
+                    release["version"],
+                    dict([(k, v) for k, v in vfile.items() if k in different]),
+                    dict([(k, v) for k, v in file_data.items() if k in different]),
+                )
+                self.warehouse.projects(release["normalized"]).versions(release["version"]).files(distribution["filename"]).put(file_data)
+                vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files(distribution["filename"]).get()
+
+        return vfile
+
+    def sync_files(self, release, version):
+        _version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get(full=True)
+
+        # Determine if any files need to be deleted
+        warehouse_files = set([x["filename"] for x in _version["files"]])
+        local_files = set([x["filename"] for x in release["files"]])
+        deleted = warehouse_files - local_files
+
+        # Delete any files that need to be deleted
+        for filename in deleted:
+            logger.info("Deleting the file '%s' from '%s' version '%s'", filename, release["name"], release["version"])
+            self.warehouse.projects(release["normalized"]).versions(release["version"]).files(filename).delete()
+
+        return [self.get_and_update_or_create_file(release, version, distribution) for distribution in release["files"]]
+
     def sync_release(self, release):
         if "/" in release["version"]:
             # We cannot accept versions with a / in it.
@@ -233,49 +279,7 @@ class Processor(object):
 
         project = self.get_or_create_project(release["name"])
         version = self.get_and_update_or_create_version(release, project)
-
-        # @@@ Check warehouse for a list of files that this version has and delete any ones
-        #      that no longer exist.
-
-        _version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get(full=True)
-
-        warehouse_files = set([x["filename"] for x in _version["files"]])
-        local_files = set([x["filename"] for x in release["files"]])
-
-        deleted = warehouse_files - local_files
-
-        for filename in deleted:
-            logger.info("Deleting the file '%s' from '%s' version '%s'", filename, release["name"], release["version"])
-            self.warehouse.projects(release["normalized"]).versions(release["version"]).files(filename).delete()
-
-        for f in release["files"]:
-            file_data = self.to_warehouse_file(release, f, extra={"version": version["resource_uri"]})
-
-            try:
-                # Get
-                vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files(f["filename"]).get()
-            except slumber.exceptions.HttpClientError as e:
-                if not e.response.status_code == 404:
-                    raise
-
-                # Create
-                vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files.post(file_data)
-            else:
-                # Update
-                diff = DictDiffer(file_data, vfile)
-                different = diff.added() | (diff.changed() - set(["file"])) | (diff.removed() - EXPECTED)
-
-                if different:
-                    logger.info(
-                        "Updating the file '%s' for '%s' version '%s'. warehouse: '%s' updated: '%s'",
-                        f["filename"],
-                        release["name"],
-                        release["version"],
-                        dict([(k, v) for k, v in vfile.items() if k in different]),
-                        dict([(k, v) for k, v in file_data.items() if k in different]),
-                    )
-                    self.warehouse.projects(release["normalized"]).versions(release["version"]).files(f["filename"]).put(file_data)
-                    vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files(f["filename"]).get()
+        files = self.sync_files(release, version)
 
         self.store_release_hash(release)
 
