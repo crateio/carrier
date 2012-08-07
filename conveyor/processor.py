@@ -283,6 +283,12 @@ class Processor(object):
 
         self.store_release_hash(release)
 
+        return {
+            "project": project,
+            "version": version,
+            "files": files,
+        }
+
     def to_warehouse_version(self, release, extra=None):
         data = {
             "version": release["version"],
