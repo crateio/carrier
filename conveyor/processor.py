@@ -190,7 +190,7 @@ class Processor(object):
             logger.error("Skipping '%s' version '%s' because it contains a '/'", release["name"], release["version"])
             return
 
-        if not self.release_changed:
+        if not self.release_changed(release):
             logger.info("Skipping '%s' version '%s' because it has not changed", release["name"], release["version"])
             return
 
