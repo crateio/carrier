@@ -151,6 +151,41 @@ class Processor(object):
 
         return project
 
+    def get_and_update_or_create_version(self, release, project):
+        version_data = self.to_warehouse_version(release, extra={"project": project["resource_uri"]})
+
+        try:
+            # GET
+            version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get()
+        except slumber.exceptions.HttpClientError as e:
+            if not e.response.status_code == 404:
+                raise
+
+            # Create
+            version = self.warehouse.projects(release["normalized"]).versions().post(version_data)
+        else:
+            # Update
+            version["classifiers"] = sorted(version["classifiers"])
+            diff = DictDiffer(version_data, version)
+            different = diff.added() | diff.changed() | diff.removed() - (EXPECTED | set(["files"]))
+
+            if "created" in different and not version.get("files", None):
+                # The created time is a guess because we don't have any uploaded files
+                different.remove("created")
+
+            if different:
+                logger.info(
+                    "Updating the version for '%s' version '%s'. warehouse: '%s' updated: '%s'",
+                    release["name"],
+                    release["version"],
+                    dict([(k, v) for k, v in version.items() if k in different]),
+                    dict([(k, v) for k, v in version_data.items() if k in different]),
+                )
+                self.warehouse.projects(release["normalized"]).versions(release["version"]).put(version_data)
+                version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get()
+
+        return version
+
     def _compute_hash(self, release):
         def _dict_constant_data_structure(dictionary):
             data = []
@@ -197,39 +232,7 @@ class Processor(object):
         logger.info("Syncing '%s' version '%s'", release["name"], release["version"])
 
         project = self.get_or_create_project(release["name"])
-
-        # Get or Create Version
-        version_data = self.to_warehouse_version(release, extra={"project": project["resource_uri"]})
-
-        try:
-            # GET
-            version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get()
-        except slumber.exceptions.HttpClientError as e:
-            if not e.response.status_code == 404:
-                raise
-
-            # Create
-            version = self.warehouse.projects(release["normalized"]).versions().post(version_data)
-        else:
-            # Update
-            version["classifiers"] = sorted(version["classifiers"])
-            diff = DictDiffer(version_data, version)
-            different = diff.added() | diff.changed() | diff.removed() - (EXPECTED | set(["files"]))
-
-            if "created" in different and not version.get("files", None):
-                # The created time is a guess because we don't have any uploaded files
-                different.remove("created")
-
-            if different:
-                logger.info(
-                    "Updating the version for '%s' version '%s'. warehouse: '%s' updated: '%s'",
-                    release["name"],
-                    release["version"],
-                    dict([(k, v) for k, v in version.items() if k in different]),
-                    dict([(k, v) for k, v in version_data.items() if k in different]),
-                )
-                self.warehouse.projects(release["normalized"]).versions(release["version"]).put(version_data)
-                version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get()
+        version = self.get_and_update_or_create_version(release, project)
 
         # @@@ Check warehouse for a list of files that this version has and delete any ones
         #      that no longer exist.
