@@ -48,6 +48,10 @@ class Conveyor(object):
             self.scheduler.shutdown(wait=False)
 
     def process(self):
+        if not self.previous_time:
+            # This is the first time we've ran so we need to do a bulk import
+            raise Exception(" Cannot process changes with no value for the last successful run.")
+
         warehouse = slumber.API(
                         self.config["conveyor"]["warehouse"]["url"],
                         auth=(
@@ -56,8 +60,7 @@ class Conveyor(object):
                         )
                     )
 
-        processor_class = self.get_processor_class()
-        processor = processor_class(
+        processor = Processor(
                         index=self.config["conveyor"]["index"],
                         warehouse=warehouse,
                         store=self.redis,
@@ -65,13 +68,6 @@ class Conveyor(object):
                     )
 
         processor.process()
-
-    def get_processor_class(self):
-        if self.previous_time is None:
-            # This is the first time we've ran so we need to do a bulk import
-            raise Exception("Bulk import must be run prior to running Conveyor.")
-
-        return Processor
 
     @property
     def previous_time(self):
