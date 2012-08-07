@@ -151,7 +151,7 @@ class Processor(object):
 
         return project
 
-    def release_changed(self, release):
+    def _compute_hash(self, release):
         def _dict_constant_data_structure(dictionary):
             data = []
 
@@ -164,16 +164,25 @@ class Processor(object):
 
             return sorted(data, key=lambda x: x[0])
 
+        if not hasattr(self, "_computed_hash"):
+            self._computed_hash = hashlib.sha512(json.dumps(
+                                                    _dict_constant_data_structure(release),
+                                                    default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)
+                                                ).hexdigest()[:32]
+
+        return self._computed_hash
+
+    def release_changed(self, release):
         key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
 
-        # @@@ Note this doesn't handle the fact that dictionaries can have different key orders.
-        #      How can we solve this?
-        data = _dict_constant_data_structure(release)
-
         stored_hash = self.store.get(key)
-        computed_hash = hashlib.sha512(json.dumps(data, default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)).hexdigest()[:32]
+        computed_hash = self._compute_hash(release)
 
         return not (stored_hash and stored_hash == computed_hash)
+
+    def store_release_hash(self, release):
+        key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
+        self.store.set(key, self._compute_hash(release))
 
     def sync_release(self, release):
         if "/" in release["version"]:
@@ -264,7 +273,7 @@ class Processor(object):
                     self.warehouse.projects(release["normalized"]).versions(release["version"]).files(f["filename"]).put(file_data)
                     vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files(f["filename"]).get()
 
-        self.store.set(key, computed_hash)
+        self.store_release_hash(release)
 
     def to_warehouse_version(self, release, extra=None):
         data = {
