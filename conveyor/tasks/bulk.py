@@ -17,6 +17,8 @@ def get_jobs(last=0):
 
         app = Conveyor()
 
+        logger.info("Current time is '%s'", current)
+
         warehouse = slumber.API(
                             app.config["conveyor"]["warehouse"]["url"],
                             auth=(
@@ -35,8 +37,6 @@ def get_jobs(last=0):
 
         for package in names:
             yield package
-
-        processor.store.set(get_key(processor.store_prefix, "pypi:since"), current)
     except Exception as e:
         logger.exception(str(e))
         raise
