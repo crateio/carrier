@@ -408,15 +408,17 @@ class Processor(object):
     def get_warehouse_releases(self, package):
         normalized = _normalize_regex.sub("-", package).lower()
 
+        # @@@ Implement paging
+
         try:
-            project = self.warehouse.projects(normalized).get(full=True)
+            versions = self.warehouse.projects(normalized).versions().get(limit=1000)
         except slumber.exceptions.HttpClientError as e:
             if not e.response.status_code == 404:
                 raise
 
             return set()
 
-        return set([x["version"] for x in project["versions"]])
+        return set([v["version"] for v in versions["objects"]])
 
     def delete_project_version(self, package, version):
         normalized = _normalize_regex.sub("-", package).lower()
