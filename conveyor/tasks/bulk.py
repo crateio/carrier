@@ -7,7 +7,7 @@ import slumber
 from requests.exceptions import ConnectionError
 
 from conveyor.core import Conveyor
-from conveyor.processor import Processor, get_key
+from conveyor.processor import Processor
 
 logger = logging.getLogger(__name__)
 
