@@ -91,7 +91,7 @@ class Processor(object):
                 raise RuntimeError("Do not understand the type returned by release_urls")
 
             # fix classifiers
-            item["classifiers"] = sorted(list(set(get(item, "classifiers", []))))
+            item["classifiers"] = sorted(set(get(item, "classifiers", [])))
 
             files = []
 
