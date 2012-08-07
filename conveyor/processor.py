@@ -134,6 +134,18 @@ class Processor(object):
 
             yield item
 
+    def release_changed(self, release):
+        key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
+
+        stored_hash = self.store.get(key)
+        computed_hash = self._compute_hash(release)
+
+        return not (stored_hash and stored_hash == computed_hash)
+
+    def store_release_hash(self, release):
+        key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
+        self.store.set(key, self._compute_hash(release))
+
     def get_or_create_project(self, project):
         normalized = _normalize_regex.sub("-", project).lower()
 
@@ -206,18 +218,6 @@ class Processor(object):
                                                 ).hexdigest()[:32]
 
         return self._computed_hash
-
-    def release_changed(self, release):
-        key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
-
-        stored_hash = self.store.get(key)
-        computed_hash = self._compute_hash(release)
-
-        return not (stored_hash and stored_hash == computed_hash)
-
-    def store_release_hash(self, release):
-        key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
-        self.store.set(key, self._compute_hash(release))
 
     def sync_release(self, release):
         if "/" in release["version"]:
