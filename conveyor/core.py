@@ -12,7 +12,7 @@ import yaml
 
 from apscheduler.scheduler import Scheduler
 
-from conveyor.processor import Processor
+from conveyor.processor import Processor, get_key
 
 # @@@ Switch all Urls to SSL
 
@@ -75,4 +75,4 @@ class Conveyor(object):
 
     @property
     def previous_time(self):
-        return None
+        return self.redis.get(get_key(self.config.get("redis", {}).get("prefix", None), "pypi:since"))
