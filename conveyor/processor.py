@@ -134,17 +134,38 @@ class Processor(object):
 
             yield item
 
+    def compute_hash(self, release):
+        def _dict_constant_data_structure(dictionary):
+            data = []
+
+            for k, v in dictionary.items():
+                if isinstance(v, dict):
+                    v = _dict_constant_data_structure(v)
+                elif isinstance(v, set):
+                    v = sorted(v)
+                data.append([k, v])
+
+            return sorted(data, key=lambda x: x[0])
+
+        if not hasattr(self, "_computed_hash"):
+            self._computed_hash = hashlib.sha512(json.dumps(
+                                                    _dict_constant_data_structure(release),
+                                                    default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)
+                                                ).hexdigest()[:32]
+
+        return self._computed_hash
+
     def release_changed(self, release):
         key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
 
         stored_hash = self.store.get(key)
-        computed_hash = self._compute_hash(release)
+        computed_hash = self.compute_hash(release)
 
         return not (stored_hash and stored_hash == computed_hash)
 
     def store_release_hash(self, release):
         key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
-        self.store.set(key, self._compute_hash(release))
+        self.store.set(key, self.compute_hash(release))
 
     def get_or_create_project(self, project):
         normalized = _normalize_regex.sub("-", project).lower()
@@ -197,27 +218,6 @@ class Processor(object):
                 version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get()
 
         return version
-
-    def _compute_hash(self, release):
-        def _dict_constant_data_structure(dictionary):
-            data = []
-
-            for k, v in dictionary.items():
-                if isinstance(v, dict):
-                    v = _dict_constant_data_structure(v)
-                elif isinstance(v, set):
-                    v = sorted(v)
-                data.append([k, v])
-
-            return sorted(data, key=lambda x: x[0])
-
-        if not hasattr(self, "_computed_hash"):
-            self._computed_hash = hashlib.sha512(json.dumps(
-                                                    _dict_constant_data_structure(release),
-                                                    default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)
-                                                ).hexdigest()[:32]
-
-        return self._computed_hash
 
     def get_and_update_or_create_file(self, release, version, distribution):
         file_data = self.to_warehouse_file(release, distribution, extra={"version": version["resource_uri"]})
