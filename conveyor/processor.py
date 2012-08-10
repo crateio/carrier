@@ -81,6 +81,10 @@ class Processor(object):
 
         for version in versions:
             item = self.client.release_data(name, version)
+
+            if not item:
+                continue
+
             url = self.client.release_urls(item["name"], item["version"])
 
             if isinstance(url, collections.Mapping):
