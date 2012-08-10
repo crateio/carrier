@@ -455,11 +455,14 @@ class Processor(object):
         if action == "remove":
             if version is None:
                 obj = self.warehouse.projects(normalized)
+                logger.info("Deleting '%s'", name)
             else:
                 obj = self.warehouse.projects(normalized).versions(version)
+                logger.info("Deleting '%s' version '%s'", name, version)
         elif action.startswith("remove file"):
             filename = matches.groups()[0]
             obj = self.warehouse.projects(normalized).versions(version).files(filename)
+            logger.info("Deleting '%s' version '%s' filename '%s'", name, version, filename)
         else:
             raise RuntimeError("Unknown Action passed to delete()")
 
