@@ -504,6 +504,10 @@ class Processor(object):
 
         changes = self.client.changelog(since)
 
+        if changes:
+            if isinstance(changes[0], basestring):
+                changes = [changes]
+
         for name, version, timestamp, action in changes:
             logdata = {"action": action, "name": name, "version": version, "timestamp": timestamp}
             logger.debug("Processing %(name)s %(version)s %(timestamp)s %(action)s" % logdata)
