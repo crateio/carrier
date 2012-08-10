@@ -440,6 +440,40 @@ class Processor(object):
 
         self.warehouse.projects(normalized).delete()
 
+    def update(self, name, version, timestamp, action, matches):
+        for release in self.get_releases(name, version=version):
+            self.sync_release(release)
+
+    def delete(self, name, version, timestamp, action, matches):
+        normalized = _normalize_regex.sub("-", name).lower()
+        filename = None
+
+        if action == "remove":
+            if version is None:
+                obj = self.warehouse.projects(normalized)
+            else:
+                obj = self.warehouse.projects(normalized).versions(version)
+        elif action.startswith("remove file"):
+            filename = matches.groups()[0]
+            obj = self.warehouse.projects(normalized).versions(version).files(filename)
+        else:
+            raise RuntimeError("Unknown Action passed to delete()")
+
+        try:
+            obj.delete()
+        except slumber.exceptions.HttpClientError as e:
+            if not e.response.status_code == 404:
+                raise
+            msg = "404 received trying to delete %s" % name
+
+            if version is not None:
+                msg += " version '%s'" % version
+
+            if filename is not None:
+                msg += "filename '%s'" % filename
+
+            logger.warning(msg)
+
     def process(self):
         # @@@ Handle Deletion
 
@@ -449,11 +483,30 @@ class Processor(object):
 
         since = int(float(self.store.get(get_key(self.store_prefix, "pypi:since")))) - 10
 
-        names = set([(c[0], c[1]) for c in self.client.changelog(since)])
+        dispatch = collections.OrderedDict([
+            (re.compile("^create$"), self.update),
+            (re.compile("^new release$"), self.update),
+            (re.compile("^add [\w\d\.]+ file .+$"), self.update),
+            (re.compile("^remove$"), self.delete),
+            (re.compile("^remove file (.+)$"), self.delete),
+            (re.compile("^update [\w]+(, [\w]+)*$"), self.update),
+            #(re.compile("^docupdate$"), docupdate),  # @@@ Do Something
+            #(re.compile("^add (Owner|Maintainer) .+$"), add_user_role),  # @@@ Do Something
+            #(re.compile("^remove (Owner|Maintainer) .+$"), remove_user_role),  # @@@ Do Something
+        ])
 
-        for package in names:
-            for release in self.get_releases(package[0], version=package[1]):
-                self.sync_release(release)
+        changes = self.client.changelog(since)
+
+        for name, version, timestamp, action in changes:
+            logdata = {"action": action, "name": name, "version": version, "timestamp": timestamp}
+            logger.debug("Processing %(name)s %(version)s %(timestamp)s %(action)s" % logdata)
+
+            # Dispatch Based on the action
+            for pattern, func in dispatch.iteritems():
+                matches = pattern.search(action)
+                if matches is not None:
+                    func(name, version, timestamp, action, matches)
+                    break
 
         self.store.set(get_key(self.store_prefix, "pypi:since"), current)
 
