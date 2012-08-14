@@ -47,6 +47,7 @@ def get_jobs(last=0):
 def handle_job(name):
     try:
         tried = 0
+        delay = 1
 
         while True:
             try:
@@ -81,7 +82,8 @@ def handle_job(name):
                     raise
                 else:
                     # Wait a moment
-                    time.sleep(10)
+                    time.sleep(delay)
+                    delay * 2
     except Exception as e:
         logger.exception(str(e))
         raise
