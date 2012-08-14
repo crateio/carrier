@@ -4,7 +4,7 @@ import time
 
 import slumber
 
-from requests.exceptions import ConnectionError
+from requests.exceptions import ConnectionError, HttpServerError
 
 from conveyor.core import Conveyor
 from conveyor.processor import Processor
@@ -75,7 +75,7 @@ def handle_job(name):
                     processor.sync_release(release)
 
                 break
-            except ConnectionError:
+            except (ConnectionError, HttpServerError):
                 # Attempt to process again if we have a connection error
                 if tried >= 10:  # Try a max of 10 times
                     raise
