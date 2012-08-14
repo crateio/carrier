@@ -4,7 +4,9 @@ import time
 
 import slumber
 
-from requests.exceptions import ConnectionError, HttpServerError
+from slumber.exceptions import HttpServerError
+
+from requests.exceptions import ConnectionError
 
 from conveyor.core import Conveyor
 from conveyor.processor import Processor
