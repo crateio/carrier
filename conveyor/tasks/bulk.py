@@ -79,6 +79,9 @@ def handle_job(name):
                 # Attempt to process again if we have a connection error
                 if tried >= 10:  # Try a max of 10 times
                     raise
+                else:
+                    # Wait a moment
+                    time.sleep(10)
     except Exception as e:
         logger.exception(str(e))
         raise
