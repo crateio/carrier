@@ -466,6 +466,14 @@ class Processor(object):
         else:
             raise RuntimeError("Unknown Action passed to delete()")
 
+        if version is None:
+            key_pattern = get_key(self.store_prefix, "pypi:process:%s:*" % name)
+            keys = self.store.keys(key_pattern)
+        else:
+            keys = [get_key(self.store_prefix, "pypi:process:%s:%s" % (name, version))]
+
+        self.store.delete(*keys)
+
         try:
             obj.delete()
         except slumber.exceptions.HttpClientError as e:
