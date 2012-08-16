@@ -472,7 +472,8 @@ class Processor(object):
         else:
             keys = [get_key(self.store_prefix, "pypi:process:%s:%s" % (name, version))]
 
-        self.store.delete(*keys)
+        for key in keys:
+            self.store.delete(key)
 
         try:
             obj.delete()
