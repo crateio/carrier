@@ -517,15 +517,24 @@ class Processor(object):
                 changes = [changes]
 
         for name, version, timestamp, action in changes:
-            logdata = {"action": action, "name": name, "version": version, "timestamp": timestamp}
-            logger.debug("Processing %(name)s %(version)s %(timestamp)s %(action)s" % logdata)
+            action_hash = hashlib.sha512(":".join([str(x) for x in [name, version, timestamp, action]])).hexdigest()[:32]
+            action_key = get_key(self.store_prefix, "pypi:changelog:%s" % action_hash)
 
-            # Dispatch Based on the action
-            for pattern, func in dispatch.iteritems():
-                matches = pattern.search(action)
-                if matches is not None:
-                    func(name, version, timestamp, action, matches)
-                    break
+            logdata = {"action": action, "name": name, "version": version, "timestamp": timestamp}
+
+            if not self.store.exists(action_key):
+                logger.debug("Processing %(name)s %(version)s %(timestamp)s %(action)s" % logdata)
+
+                # Dispatch Based on the action
+                for pattern, func in dispatch.iteritems():
+                    matches = pattern.search(action)
+                    if matches is not None:
+                        func(name, version, timestamp, action, matches)
+                        break
+
+                self.store.setex(action_key, 2592000, "1")
+            else:
+                logger.debug("Skipping %(name)s %(version)s %(timestamp)s %(action)s" % logdata)
 
         self.store.set(get_key(self.store_prefix, "pypi:since"), current)
 
