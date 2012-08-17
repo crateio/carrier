@@ -38,7 +38,7 @@ class Conveyor(object):
 
     def run(self):
         self.scheduler = Scheduler()
-        self.scheduler.add_interval_job(self.process, **self.config["conveyor"]["schedule"])
+        self.scheduler.add_interval_job(self.packages, **self.config["conveyor"]["schedule"]["packages"])
         self.scheduler.start()
 
         try:
@@ -48,7 +48,7 @@ class Conveyor(object):
             logger.info("Shutting down Conveyor...")
             self.scheduler.shutdown(wait=False)
 
-    def process(self):
+    def packages(self):
         if not self.previous_time:
             # This is the first time we've ran so we need to do a bulk import
             raise Exception(" Cannot process changes with no value for the last successful run.")
