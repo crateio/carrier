@@ -49,7 +49,7 @@ class Conveyor(object):
             self.scheduler.shutdown(wait=False)
 
     def packages(self):
-        if not self.previous_time:
+        if not self.redis.get(get_key(self.config.get("redis", {}).get("prefix", None), "pypi:since")):
             # This is the first time we've ran so we need to do a bulk import
             raise Exception(" Cannot process changes with no value for the last successful run.")
 
@@ -69,7 +69,3 @@ class Conveyor(object):
                     )
 
         processor.process()
-
-    @property
-    def previous_time(self):
-        return self.redis.get(get_key(self.config.get("redis", {}).get("prefix", None), "pypi:since"))
