@@ -2,11 +2,17 @@ from __future__ import absolute_import
 from __future__ import division
 
 
+import bz2
+import csv
 import logging
 import logging.config
+import io
 import time
+import urlparse
 
+import lxml.html
 import redis
+import requests
 import slumber
 import yaml
 
@@ -75,3 +81,54 @@ class Conveyor(object):
                     )
 
         processor.process()
+
+    def downloads(self):
+        session = requests.session()
+
+        warehouse = slumber.API(
+                        self.config["conveyor"]["warehouse"]["url"],
+                        auth=(
+                            self.config["conveyor"]["warehouse"]["auth"]["username"],
+                            self.config["conveyor"]["warehouse"]["auth"]["password"],
+                        )
+                    )
+
+        # Get a listing of all the Files
+        resp = session.get(self.config["conveyor"]["stats"])
+        resp.raise_for_status()
+
+        html = lxml.html.fromstring(resp.content)
+        urls = [(urlparse.urljoin(self.config["conveyor"]["stats"], x), x) for x in html.xpath("//a/@href")]
+
+        for url, statfile in urls:
+            if not url.endswith(".bz2"):
+                continue
+
+            date = statfile[:-4]
+            year, month, day = date.split("-")
+
+            # @@@ Check Modified
+            resp = session.get(url, prefetch=True)
+            resp.raise_for_status()
+
+            data = bz2.decompress(resp.content)
+            csv_r = csv.DictReader(io.BytesIO(data), ["project", "filename", "user_agent", "downloads"])
+
+            for row in csv_r:
+                row["date"] = date
+
+                # See if we have a Download object for this yet
+                try:
+                    downloads = warehouse.downloads.get(project=row["project"], filename=row["filename"], date__year=year, date__month=month, date__day=day, user_agent=row["user_agent"])
+                except Exception as e:
+                    import pdb; pdb.set_trace()
+                    raise
+
+                if downloads["meta"]["total_count"] == 1:
+                    warehouse.downloads(downloads["objects"][0]["id"]).put(row)
+                elif downloads["meta"]["total_count"] == 0:
+                    warehouse.downloads.post(row)
+                else:
+                    RuntimeError("There are More than 1 Download items returned")
+
+            break

@@ -1,3 +1,6 @@
+import posixpath
+
+
 class DictDiffer(object):
     """
     Calculate the difference between two dictionaries as:
@@ -24,3 +27,12 @@ class DictDiffer(object):
 
     def unchanged(self):
         return set(o for o in self.intersect if self.past_dict[o] == self.current_dict[o])
+
+
+def splitext(path):
+    """Like os.path.splitext, but take off .tar too"""
+    base, ext = posixpath.splitext(path)
+    if base.lower().endswith('.tar'):
+        ext = base[-4:] + ext
+        base = base[:-4]
+    return base, ext
