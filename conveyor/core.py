@@ -38,7 +38,13 @@ class Conveyor(object):
 
     def run(self):
         self.scheduler = Scheduler()
-        self.scheduler.add_interval_job(self.packages, **self.config["conveyor"]["schedule"]["packages"])
+
+        if self.config["conveyor"].get("schedule", {}).get("packages", {}):
+            self.scheduler.add_interval_job(self.packages, **self.config["conveyor"]["schedule"]["packages"])
+
+        if self.config["conveyor"].get("schedule", {}).get("downloads", {}):
+            self.scheduler.add_interval_job(self.downloads, **self.config["conveyor"]["schedule"]["downloads"])
+
         self.scheduler.start()
 
         try:
