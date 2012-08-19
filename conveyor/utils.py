@@ -1,4 +1,16 @@
 import posixpath
+import re
+import urlparse
+
+
+_url = re.compile(
+        r'^(?:http|ftp)s?://'  # http:// or https://
+        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
+        r'localhost|'  # localhost...
+        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|'  # ...or ipv4
+        r'\[?[A-F0-9]*:[A-F0-9:]+\]?)'  # ...or ipv6
+        r'(?::\d+)?'  # optional port
+        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
 
 class DictDiffer(object):
@@ -36,3 +48,51 @@ def splitext(path):
         ext = base[-4:] + ext
         base = base[:-4]
     return base, ext
+
+
+def validate_url(url):
+    try:
+        parts = list(urlparse.urlsplit(url))
+    except ValueError:
+        return False
+
+    if not parts[0]:
+        # If no URL scheme given, assume http://
+        parts[0] = "http"
+
+    if not parts[1]:
+        # Assume that if no domain is provided, that the path segment
+        # contains the domain.
+        parts[1] = parts[2]
+        parts[2] = ""
+        # Rebuild the url_fields list, since the domain segment may now
+        # contain the path too.
+        try:
+            parts = list(urlparse.urlsplit(urlparse.urlunsplit(parts)))
+        except ValueError:
+            return False
+
+    if not parts[2]:
+        # the path portion may need to be added before query params
+        parts[2] = "/"
+
+    cleaned_url = urlparse.urlunsplit(parts)
+
+    if not _url.search(cleaned_url):
+        # Trivial Case Failed. Try for possible IDN domain
+        if cleaned_url:
+            scheme, netloc, path, query, fragment = urlparse.urlsplit(cleaned_url)
+
+            try:
+                netloc = netloc.encode("idna").decode("ascii")  # IDN -> ACE
+            except UnicodeError:  # invalid domain part
+                return False
+
+            cleaned_url = urlparse.urlunsplit((scheme, netloc, path, query, fragment))
+
+            if not _url.search(cleaned_url):
+                return False
+        else:
+            return False
+
+    return True
