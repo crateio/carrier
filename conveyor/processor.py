@@ -180,6 +180,7 @@ class Processor(object):
             project = self.warehouse.projects(normalized).get()
         except slumber.exceptions.HttpClientError as e:
             if not e.response.status_code == 404:
+                logger.error(e.response.content)
                 raise
 
             # Create
@@ -196,6 +197,7 @@ class Processor(object):
             version = self.warehouse.versions("/".join([release["normalized"], release["version"]])).get()
         except slumber.exceptions.HttpClientError as e:
             if not e.response.status_code == 404:
+                logger.error(e.response.content)
                 raise
 
             # Create
@@ -231,6 +233,7 @@ class Processor(object):
             vfile = self.warehouse.files(distribution["filename"]).get()
         except slumber.exceptions.HttpClientError as e:
             if not e.response.status_code == 404:
+                logger.error(e.response.content)
                 raise
 
             # Create
@@ -416,6 +419,7 @@ class Processor(object):
             versions = self.warehouse.versions.get(project__name=package, limit=1000)
         except slumber.exceptions.HttpClientError as e:
             if not e.response.status_code == 404:
+                logger.error(e.response.content)
                 raise
 
             return set()
@@ -477,6 +481,7 @@ class Processor(object):
             obj.delete()
         except slumber.exceptions.HttpClientError as e:
             if not e.response.status_code == 404:
+                logger.error(e.response.content)
                 raise
             msg = "404 received trying to delete %s" % name
 
