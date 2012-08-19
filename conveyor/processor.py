@@ -193,13 +193,13 @@ class Processor(object):
 
         try:
             # GET
-            version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get()
+            version = self.warehouse.versions("/".join([release["normalized"], release["version"]])).get()
         except slumber.exceptions.HttpClientError as e:
             if not e.response.status_code == 404:
                 raise
 
             # Create
-            version = self.warehouse.projects(release["normalized"]).versions().post(version_data)
+            version = self.warehouse.versions.post(version_data)
         else:
             # Update
             version["classifiers"] = sorted(version["classifiers"])
@@ -218,8 +218,8 @@ class Processor(object):
                     dict([(k, v) for k, v in version.items() if k in different]),
                     dict([(k, v) for k, v in version_data.items() if k in different]),
                 )
-                self.warehouse.projects(release["normalized"]).versions(release["version"]).put(version_data)
-                version = self.warehouse.projects(release["normalized"]).versions(release["version"]).get()
+                self.warehouse.versions("/".join([release["normalized"], release["version"]])).put(version_data)
+                version = self.warehouse.versions("/".join([release["normalized"], release["version"]])).get()
 
         return version
 
@@ -228,13 +228,13 @@ class Processor(object):
 
         try:
             # Get
-            vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files(distribution["filename"]).get()
+            vfile = self.warehouse.files(distribution["filename"]).get()
         except slumber.exceptions.HttpClientError as e:
             if not e.response.status_code == 404:
                 raise
 
             # Create
-            vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files.post(file_data)
+            vfile = self.warehouse.files.post(file_data)
         else:
             # Update
             diff = DictDiffer(file_data, vfile)
@@ -249,21 +249,21 @@ class Processor(object):
                     dict([(k, v) for k, v in vfile.items() if k in different]),
                     dict([(k, v) for k, v in file_data.items() if k in different]),
                 )
-                self.warehouse.projects(release["normalized"]).versions(release["version"]).files(distribution["filename"]).put(file_data)
-                vfile = self.warehouse.projects(release["normalized"]).versions(release["version"]).files(distribution["filename"]).get()
+                self.warehouse.files(distribution["filename"]).put(file_data)
+                vfile = self.warehouse.files(distribution["filename"]).get()
 
         return vfile
 
     def sync_files(self, release, version):
         # Determine if any files need to be deleted
-        warehouse_files = set([f["filename"] for f in self.warehouse.projects(release["normalized"]).versions(release["version"]).files().get(limit=10000)["objects"]])
+        warehouse_files = set([f["filename"] for f in self.warehouse.files.get(version__project__name=release["name"], version__version=release["version"], limit=10000)["objects"]])
         local_files = set([x["filename"] for x in release["files"]])
         deleted = warehouse_files - local_files
 
         # Delete any files that need to be deleted
         for filename in deleted:
             logger.info("Deleting the file '%s' from '%s' version '%s'", filename, release["name"], release["version"])
-            self.warehouse.projects(release["normalized"]).versions(release["version"]).files(filename).delete()
+            self.warehouse.files(filename).delete()
 
         return [self.get_and_update_or_create_file(release, version, distribution) for distribution in release["files"]]
 
@@ -410,12 +410,10 @@ class Processor(object):
         return data
 
     def get_warehouse_releases(self, package):
-        normalized = _normalize_regex.sub("-", package).lower()
-
         # @@@ Implement paging
 
         try:
-            versions = self.warehouse.projects(normalized).versions().get(limit=1000)
+            versions = self.warehouse.versions.get(project__name=package, limit=1000)
         except slumber.exceptions.HttpClientError as e:
             if not e.response.status_code == 404:
                 raise
@@ -431,7 +429,7 @@ class Processor(object):
         logger.info("Deleting version '%s' of '%s'", version, package)
 
         self.store.delete(key)
-        self.warehouse.projects(normalized).versions(version).delete()
+        self.warehouse.versions("/".join([normalized, version])).delete()
 
     def delete_project(self, project):
         normalized = _normalize_regex.sub("-", project).lower()
@@ -457,11 +455,11 @@ class Processor(object):
                 obj = self.warehouse.projects(normalized)
                 logger.info("Deleting '%s'", name)
             else:
-                obj = self.warehouse.projects(normalized).versions(version)
+                obj = self.warehouse.versions("/".join([normalized, version]))
                 logger.info("Deleting '%s' version '%s'", name, version)
         elif action.startswith("remove file"):
             filename = matches.groups()[0]
-            obj = self.warehouse.projects(normalized).versions(version).files(filename)
+            obj = self.warehouse.files(filename)
             logger.info("Deleting '%s' version '%s' filename '%s'", name, version, filename)
         else:
             raise RuntimeError("Unknown Action passed to delete()")
