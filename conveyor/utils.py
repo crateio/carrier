@@ -50,11 +50,8 @@ def splitext(path):
     return base, ext
 
 
-def validate_url(url):
-    try:
-        parts = list(urlparse.urlsplit(url))
-    except ValueError:
-        return False
+def clean_url(url):
+    parts = list(urlparse.urlsplit(url))
 
     if not parts[0]:
         # If no URL scheme given, assume http://
@@ -67,10 +64,7 @@ def validate_url(url):
         parts[2] = ""
         # Rebuild the url_fields list, since the domain segment may now
         # contain the path too.
-        try:
-            parts = list(urlparse.urlsplit(urlparse.urlunsplit(parts)))
-        except ValueError:
-            return False
+        parts = list(urlparse.urlsplit(urlparse.urlunsplit(parts)))
 
     if not parts[2]:
         # the path portion may need to be added before query params
@@ -86,13 +80,13 @@ def validate_url(url):
             try:
                 netloc = netloc.encode("idna").decode("ascii")  # IDN -> ACE
             except UnicodeError:  # invalid domain part
-                return False
+                raise ValueError
 
             cleaned_url = urlparse.urlunsplit((scheme, netloc, path, query, fragment))
 
             if not _url.search(cleaned_url):
-                return False
+                raise ValueError
         else:
-            return False
+            raise ValueError
 
-    return True
+    return cleaned_url

@@ -15,7 +15,7 @@ import requests
 import slumber.exceptions
 import xmlrpc2.client
 
-from conveyor.utils import DictDiffer, validate_url
+from conveyor.utils import DictDiffer, clean_url
 
 
 _normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
@@ -383,8 +383,10 @@ class Processor(object):
         # Clean the URI fields
         cleaned_uris = {}
         for k, v in data["uris"].iteritems():
-            if validate_url(v):
-                cleaned_uris[k] = v
+            try:
+                cleaned_uris[k] = clean_url(v)
+            except ValueError:
+                pass
         data["uris"] = cleaned_uris
 
         if extra is not None:
