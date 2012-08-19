@@ -302,9 +302,6 @@ class Processor(object):
             "description": get(release, "description", ""),
             "license": get(release, "license", ""),
 
-            "author": {},
-            "maintainer": {},
-
             "classifiers": get(release, "classifiers", []),
             "uris": {},
 
@@ -319,16 +316,16 @@ class Processor(object):
         }
 
         if get(release, "author", None):
-            data["author"]["name"] = release["author"]
+            data["author"] = release["author"]
 
         if get(release, "author_email", None):
-            data["author"]["email"] = release["author_email"]
+            data["author_email"] = release["author_email"]
 
         if get(release, "maintainer", None):
-            data["maintainer"]["name"] = release["maintainer"]
+            data["maintainer"] = release["maintainer"]
 
         if get(release, "maintainer_email", None):
-            data["maintainer"]["email"] = release["maintainer_email"]
+            data["maintainer_email"] = release["maintainer_email"]
 
         if get(release, "download_url"):
             data["uris"]["Download"] = release["download_url"]
