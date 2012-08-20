@@ -108,8 +108,20 @@ class Conveyor(object):
             year, month, day = date.split("-")
 
             # @@@ Check Modified
-            resp = session.get(url, prefetch=True)
+            last_modified_key = get_key(self.config.get("redis", {}).get("prefix", ""), "pypi:download:last_modified:%s" % url)
+            last_modified = self.redis.get(last_modified_key)
+
+            headers = {"If-Modified-Since": last_modified} if last_modified else None
+
+            resp = session.get(url, headers=headers, prefetch=True)
+
+            if resp.status_code == 304:
+                logger.info("Skipping %s, it has not been modified since %s", statfile, last_modified)
+                continue
+
             resp.raise_for_status()
+
+            logger.info("Computing download counts from %s", statfile)
 
             data = bz2.decompress(resp.content)
             csv_r = csv.DictReader(io.BytesIO(data), ["project", "filename", "user_agent", "downloads"])
@@ -130,5 +142,10 @@ class Conveyor(object):
                     warehouse.downloads.post(row)
                 else:
                     RuntimeError("There are More than 1 Download items returned")
+
+            if "Last-Modified" in resp.headers:
+                self.redis.set(last_modified_key, resp.headers["Last-Modified"])
+            else:
+                self.redis.delete(last_modified_key)
 
             break
