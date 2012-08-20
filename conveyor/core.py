@@ -107,7 +107,6 @@ class Conveyor(object):
             date = statfile[:-4]
             year, month, day = date.split("-")
 
-            # @@@ Check Modified
             last_modified_key = get_key(self.config.get("redis", {}).get("prefix", ""), "pypi:download:last_modified:%s" % url)
             last_modified = self.redis.get(last_modified_key)
 
