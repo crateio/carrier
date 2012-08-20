@@ -73,9 +73,12 @@ class Conveyor(object):
                         )
                     )
 
+        session = requests.session(verify=self.config["conveyor"].get("verify", True))
+
         processor = Processor(
                         index=self.config["conveyor"]["index"],
                         warehouse=warehouse,
+                        session=session,
                         store=self.redis,
                         store_prefix=self.config.get("redis", {}).get("prefix", None)
                     )
@@ -83,7 +86,7 @@ class Conveyor(object):
         processor.process()
 
     def downloads(self):
-        session = requests.session()
+        session = requests.session(verify=self.config["conveyor"].get("verify", True))
 
         warehouse = slumber.API(
                         self.config["conveyor"]["warehouse"]["url"],
