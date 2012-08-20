@@ -130,11 +130,7 @@ class Conveyor(object):
                 row["date"] = date
 
                 # See if we have a Download object for this yet
-                try:
-                    downloads = warehouse.downloads.get(project=row["project"], filename=row["filename"], date__year=year, date__month=month, date__day=day, user_agent=row["user_agent"])
-                except Exception as e:
-                    import pdb; pdb.set_trace()
-                    raise
+                downloads = warehouse.downloads.get(project=row["project"], filename=row["filename"], date__year=year, date__month=month, date__day=day, user_agent=row["user_agent"])
 
                 if downloads["meta"]["total_count"] == 1:
                     warehouse.downloads(downloads["objects"][0]["id"]).put(row)
