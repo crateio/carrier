@@ -130,6 +130,7 @@ class Conveyor(object):
 
             for row in csv_r:
                 row["date"] = date
+                row["downloads"] = int(row["downloads"])
 
                 # See if we have a Download object for this yet
                 downloads = warehouse.downloads.get(project=row["project"], filename=row["filename"], date__year=year, date__month=month, date__day=day, user_agent=row["user_agent"])
