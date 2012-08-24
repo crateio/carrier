@@ -172,19 +172,11 @@ class Processor(object):
         self.store.set(key, self.compute_hash(release))
 
     def get_and_update_or_create_version(self, release, project):
-        version_data = self.to_warehouse_version(release, extra={"project": project["resource_uri"]})
+        version_data = self.to_warehouse_version(release)
 
-        try:
-            # GET
-            version = self.warehouse.versions("/".join([release["normalized"], release["version"]])).get()
-        except slumber.exceptions.HttpClientError as e:
-            if not e.response.status_code == 404:
-                logger.error(e.response.content)
-                raise
+        version, c = self.warehouse.versions.get_or_create(project=project, version=release["version"], defaults=version_data)
 
-            # Create
-            version = self.warehouse.versions.post(version_data)
-        else:
+        if not c:
             # Update
             version["classifiers"] = sorted(version["classifiers"])
             diff = DictDiffer(version_data, version)
@@ -202,8 +194,11 @@ class Processor(object):
                     dict([(k, v) for k, v in version.items() if k in different]),
                     dict([(k, v) for k, v in version_data.items() if k in different]),
                 )
-                self.warehouse.versions("/".join([release["normalized"], release["version"]])).put(version_data)
-                version = self.warehouse.versions("/".join([release["normalized"], release["version"]])).get()
+
+                for k, v in version_data.iteritems():
+                    setattr(version, k, v)
+
+                version.save()
 
         return version
 
