@@ -176,7 +176,6 @@ class Processor(object):
         version, created = self.warehouse.versions.objects.get_or_create(project=project, version=release["version"], defaults=version_data)
 
         if not created:
-            # Update
             version.classifiers = sorted(version.classifiers)
 
             changed = False
