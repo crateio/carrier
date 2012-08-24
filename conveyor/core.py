@@ -48,9 +48,6 @@ class Conveyor(object):
         if self.config["conveyor"].get("schedule", {}).get("packages", {}):
             self.scheduler.add_interval_job(self.packages, **self.config["conveyor"]["schedule"]["packages"])
 
-        if self.config["conveyor"].get("schedule", {}).get("downloads", {}):
-            self.scheduler.add_interval_job(self.downloads, **self.config["conveyor"]["schedule"]["downloads"])
-
         self.scheduler.start()
 
         try:
@@ -84,67 +81,3 @@ class Conveyor(object):
                     )
 
         processor.process()
-
-    def downloads(self):
-        session = requests.session(verify=self.config["conveyor"].get("verify", True))
-
-        warehouse = slumber.API(
-                        self.config["conveyor"]["warehouse"]["url"],
-                        auth=(
-                            self.config["conveyor"]["warehouse"]["auth"]["username"],
-                            self.config["conveyor"]["warehouse"]["auth"]["password"],
-                        )
-                    )
-
-        # Get a listing of all the Files
-        resp = session.get(self.config["conveyor"]["stats"])
-        resp.raise_for_status()
-
-        html = lxml.html.fromstring(resp.content)
-        urls = [(urlparse.urljoin(self.config["conveyor"]["stats"], x), x) for x in html.xpath("//a/@href")]
-
-        for url, statfile in urls:
-            if not url.endswith(".bz2"):
-                continue
-
-            date = statfile[:-4]
-            year, month, day = date.split("-")
-
-            last_modified_key = get_key(self.config.get("redis", {}).get("prefix", ""), "pypi:download:last_modified:%s" % url)
-            last_modified = self.redis.get(last_modified_key)
-
-            headers = {"If-Modified-Since": last_modified} if last_modified else None
-
-            resp = session.get(url, headers=headers, prefetch=True)
-
-            if resp.status_code == 304:
-                logger.info("Skipping %s, it has not been modified since %s", statfile, last_modified)
-                continue
-
-            resp.raise_for_status()
-
-            logger.info("Computing download counts from %s", statfile)
-
-            data = bz2.decompress(resp.content)
-            csv_r = csv.DictReader(io.BytesIO(data), ["project", "filename", "user_agent", "downloads"])
-
-            for row in csv_r:
-                row["date"] = date
-                row["downloads"] = int(row["downloads"])
-
-                # See if we have a Download object for this yet
-                downloads = warehouse.downloads.get(project=row["project"], filename=row["filename"], date__year=year, date__month=month, date__day=day, user_agent=row["user_agent"])
-
-                if downloads["meta"]["total_count"] == 1:
-                    warehouse.downloads(downloads["objects"][0]["id"]).put(row)
-                elif downloads["meta"]["total_count"] == 0:
-                    warehouse.downloads.post(row)
-                else:
-                    RuntimeError("There are More than 1 Download items returned")
-
-            if "Last-Modified" in resp.headers:
-                self.redis.set(last_modified_key, resp.headers["Last-Modified"])
-            else:
-                self.redis.delete(last_modified_key)
-
-            break
