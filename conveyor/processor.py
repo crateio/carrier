@@ -193,26 +193,17 @@ class Processor(object):
     def get_and_update_or_create_file(self, release, version, distribution):
         file_data = self.to_warehouse_file(release, distribution, extra={"version": version})
 
-        vfile, c = self.warehouse.files.objects.get_or_create(filename=file_data["filename"], defaults=file_data)
+        vfile, created = self.warehouse.files.objects.get_or_create(filename=file_data["filename"], defaults=file_data)
 
-        if not c:
-            # Update
-            diff = DictDiffer(file_data, vfile)
-            different = diff.added() | (diff.changed() - set(["file"])) | (diff.removed() - EXPECTED)
+        if not created:
+            changed = False
 
-            if different:
-                logger.info(
-                    "Updating the file '%s' for '%s' version '%s'. warehouse: '%s' updated: '%s'",
-                    distribution["filename"],
-                    release["name"],
-                    release["version"],
-                    dict([(k, v) for k, v in vfile.items() if k in different]),
-                    dict([(k, v) for k, v in file_data.items() if k in different]),
-                )
-
-                for k, v in file_data.iteritems():
+            for k, v in file_data.iteritems():
+                if getattr(vfile, k, None) != v:
+                    changed = True
                     setattr(vfile, k, v)
 
+            if changed:
                 vfile.save()
 
         return vfile
