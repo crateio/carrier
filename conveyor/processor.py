@@ -12,7 +12,6 @@ import time
 
 import pytz
 import requests
-import slumber.exceptions
 import xmlrpc2.client
 
 from conveyor.utils import DictDiffer, clean_url
@@ -436,8 +435,6 @@ class Processor(object):
         obj.delete()
 
     def process(self):
-        # @@@ Handle Deletion
-
         logger.info("Starting changed projects synchronization")
 
         current = time.mktime(datetime.datetime.utcnow().timetuple())
