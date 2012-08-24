@@ -203,19 +203,11 @@ class Processor(object):
         return version
 
     def get_and_update_or_create_file(self, release, version, distribution):
-        file_data = self.to_warehouse_file(release, distribution, extra={"version": version["resource_uri"]})
+        file_data = self.to_warehouse_file(release, distribution, extra={"version": version})
 
-        try:
-            # Get
-            vfile = self.warehouse.files(distribution["filename"]).get()
-        except slumber.exceptions.HttpClientError as e:
-            if not e.response.status_code == 404:
-                logger.error(e.response.content)
-                raise
+        vfile, c = self.warehouse.files.objects.get_or_create(filename=file_data["filename"], defaults=file_data)
 
-            # Create
-            vfile = self.warehouse.files.post(file_data)
-        else:
+        if not c:
             # Update
             diff = DictDiffer(file_data, vfile)
             different = diff.added() | (diff.changed() - set(["file"])) | (diff.removed() - EXPECTED)
@@ -229,8 +221,11 @@ class Processor(object):
                     dict([(k, v) for k, v in vfile.items() if k in different]),
                     dict([(k, v) for k, v in file_data.items() if k in different]),
                 )
-                self.warehouse.files(distribution["filename"]).put(file_data)
-                vfile = self.warehouse.files(distribution["filename"]).get()
+
+                for k, v in file_data.iteritems():
+                    setattr(vfile, k, v)
+
+                vfile.save()
 
         return vfile
 
