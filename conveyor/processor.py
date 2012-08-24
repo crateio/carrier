@@ -385,20 +385,6 @@ class Processor(object):
 
         return data
 
-    def get_warehouse_releases(self, package):
-        # @@@ Implement paging
-
-        try:
-            versions = self.warehouse.versions.get(project__name=package, limit=1000)
-        except slumber.exceptions.HttpClientError as e:
-            if not e.response.status_code == 404:
-                logger.error(e.response.content)
-                raise
-
-            return set()
-
-        return set([v["version"] for v in versions["objects"]])
-
     def delete_project_version(self, package, version):
         normalized = _normalize_regex.sub("-", package).lower()
         key = get_key(self.store_prefix, "pypi:process:%s:%s" % (package, version))
