@@ -386,16 +386,14 @@ class Processor(object):
         return data
 
     def delete_project_version(self, package, version):
-        normalized = _normalize_regex.sub("-", package).lower()
         key = get_key(self.store_prefix, "pypi:process:%s:%s" % (package, version))
 
         logger.info("Deleting version '%s' of '%s'", version, package)
 
         self.store.delete(key)
-        self.warehouse.versions("/".join([normalized, version])).delete()
+        self.warehouse.versions.objects.filter(project__name=package, version=version).delete()
 
     def delete_project(self, project):
-        normalized = _normalize_regex.sub("-", project).lower()
         search_key = get_key(self.store_prefix, "pypi:process:%s:*" % project)
 
         logger.info("Deleting '%s'", project)
@@ -403,7 +401,7 @@ class Processor(object):
         for k in self.store.keys(search_key):
             self.store.delete(k)
 
-        self.warehouse.projects(normalized).delete()
+        self.warehouse.projects.objects.filter(name=project).delete()
 
     def update(self, name, version, timestamp, action, matches):
         for release in self.get_releases(name, version=version):
