@@ -173,30 +173,20 @@ class Processor(object):
     def get_and_update_or_create_version(self, release, project):
         version_data = self.to_warehouse_version(release)
 
-        version, c = self.warehouse.versions.objects.get_or_create(project=project, version=release["version"], defaults=version_data)
+        version, created = self.warehouse.versions.objects.get_or_create(project=project, version=release["version"], defaults=version_data)
 
-        if not c:
+        if not created:
             # Update
-            version["classifiers"] = sorted(version["classifiers"])
-            diff = DictDiffer(version_data, version)
-            different = diff.added() | diff.changed() | diff.removed() - (EXPECTED | set(["files"]))
+            version.classifiers = sorted(version.classifiers)
 
-            if "created" in different and not version.get("files", None):
-                # The created time is a guess because we don't have any uploaded files
-                different.remove("created")
+            changed = False
 
-            if different:
-                logger.info(
-                    "Updating the version for '%s' version '%s'. warehouse: '%s' updated: '%s'",
-                    release["name"],
-                    release["version"],
-                    dict([(k, v) for k, v in version.items() if k in different]),
-                    dict([(k, v) for k, v in version_data.items() if k in different]),
-                )
-
-                for k, v in version_data.iteritems():
+            for k, v in version_data.iteritems():
+                if getattr(version, k, None) != v:
+                    changed = True
                     setattr(version, k, v)
 
+            if changed:
                 version.save()
 
         return version
