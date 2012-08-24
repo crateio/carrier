@@ -174,7 +174,7 @@ class Processor(object):
     def get_and_update_or_create_version(self, release, project):
         version_data = self.to_warehouse_version(release)
 
-        version, c = self.warehouse.versions.get_or_create(project=project, version=release["version"], defaults=version_data)
+        version, c = self.warehouse.versions.objects.get_or_create(project=project, version=release["version"], defaults=version_data)
 
         if not c:
             # Update
