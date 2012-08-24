@@ -408,19 +408,18 @@ class Processor(object):
             self.sync_release(release)
 
     def delete(self, name, version, timestamp, action, matches):
-        normalized = _normalize_regex.sub("-", name).lower()
         filename = None
 
         if action == "remove":
             if version is None:
-                obj = self.warehouse.projects(normalized)
+                obj = self.warehouse.projects.objects.filter(name=name).get()
                 logger.info("Deleting '%s'", name)
             else:
-                obj = self.warehouse.versions("/".join([normalized, version]))
+                obj = self.warehouse.versions.objects.filter(project__name=name, version=version).get()
                 logger.info("Deleting '%s' version '%s'", name, version)
         elif action.startswith("remove file"):
             filename = matches.groups()[0]
-            obj = self.warehouse.files(filename)
+            obj = self.warehouse.files.objects.get(filename=filename)
             logger.info("Deleting '%s' version '%s' filename '%s'", name, version, filename)
         else:
             raise RuntimeError("Unknown Action passed to delete()")
@@ -434,21 +433,7 @@ class Processor(object):
         for key in keys:
             self.store.delete(key)
 
-        try:
-            obj.delete()
-        except slumber.exceptions.HttpClientError as e:
-            if not e.response.status_code == 404:
-                logger.error(e.response.content)
-                raise
-            msg = "404 received trying to delete %s" % name
-
-            if version is not None:
-                msg += " version '%s'" % version
-
-            if filename is not None:
-                msg += "filename '%s'" % filename
-
-            logger.warning(msg)
+        obj.delete()
 
     def process(self):
         # @@@ Handle Deletion
