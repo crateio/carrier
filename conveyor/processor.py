@@ -171,24 +171,6 @@ class Processor(object):
         key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
         self.store.set(key, self.compute_hash(release))
 
-    def get_or_create_project(self, project):
-        normalized = _normalize_regex.sub("-", project).lower()
-
-        # Get or Create Project
-        try:
-            # Get
-            project = self.warehouse.projects(normalized).get()
-        except slumber.exceptions.HttpClientError as e:
-            if not e.response.status_code == 404:
-                logger.error(e.response.content)
-                raise
-
-            # Create
-            project_data = {"name": project}
-            project = self.warehouse.projects.post(project_data)
-
-        return project
-
     def get_and_update_or_create_version(self, release, project):
         version_data = self.to_warehouse_version(release, extra={"project": project["resource_uri"]})
 
@@ -282,7 +264,7 @@ class Processor(object):
 
         logger.info("Syncing '%s' version '%s'", release["name"], release["version"])
 
-        project = self.get_or_create_project(release["name"])
+        project, _ = self.warehouse.projects.objects.get_or_create(name=release["name"])
         version = self.get_and_update_or_create_version(release, project)
         files = self.sync_files(release, version)
 
