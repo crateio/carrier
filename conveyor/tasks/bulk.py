@@ -2,9 +2,8 @@ import datetime
 import logging
 import time
 
-import slumber
-
-from slumber.exceptions import HttpServerError
+import forklift
+import requests
 
 from requests.exceptions import ConnectionError, HTTPError
 
@@ -23,13 +22,15 @@ def get_jobs(last=0):
 
         logger.info("Current time is '%s'", current)
 
-        warehouse = slumber.API(
-                            app.config["conveyor"]["warehouse"]["url"],
-                            auth=(
-                                app.config["conveyor"]["warehouse"]["auth"]["username"],
-                                app.config["conveyor"]["warehouse"]["auth"]["password"],
-                            )
+        warehouse = forklift.Forklift(
+                        session=requests.session(
+                                    auth=(
+                                        app.config["conveyor"]["warehouse"]["auth"]["username"],
+                                        app.config["conveyor"]["warehouse"]["auth"]["password"]
+                                    )
                         )
+                    )
+
         processor = Processor(
                         index=app.config["conveyor"]["index"],
                         warehouse=warehouse,
@@ -57,13 +58,15 @@ def handle_job(name):
 
                 app = Conveyor()
 
-                warehouse = slumber.API(
-                                    app.config["conveyor"]["warehouse"]["url"],
-                                    auth=(
-                                        app.config["conveyor"]["warehouse"]["auth"]["username"],
-                                        app.config["conveyor"]["warehouse"]["auth"]["password"],
-                                    )
+                warehouse = forklift.Forklift(
+                                session=requests.session(
+                                            auth=(
+                                                app.config["conveyor"]["warehouse"]["auth"]["username"],
+                                                app.config["conveyor"]["warehouse"]["auth"]["password"]
+                                            )
                                 )
+                            )
+
                 processor = Processor(
                                 index=app.config["conveyor"]["index"],
                                 warehouse=warehouse,
@@ -78,7 +81,7 @@ def handle_job(name):
                     processor.sync_release(release)
 
                 break
-            except (ConnectionError, HttpServerError, HTTPError):
+            except (ConnectionError, HTTPError):
                 # Attempt to process again if we have a connection error
                 if tried >= 10:  # Try a max of 10 times
                     raise
