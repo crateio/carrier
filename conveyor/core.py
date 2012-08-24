@@ -10,10 +10,10 @@ import io
 import time
 import urlparse
 
+import forklift
 import lxml.html
 import redis
 import requests
-import slumber
 import yaml
 
 from apscheduler.scheduler import Scheduler
@@ -62,12 +62,11 @@ class Conveyor(object):
             # This is the first time we've ran so we need to do a bulk import
             raise Exception(" Cannot process changes with no value for the last successful run.")
 
-        warehouse = slumber.API(
-                        self.config["conveyor"]["warehouse"]["url"],
-                        auth=(
-                            self.config["conveyor"]["warehouse"]["auth"]["username"],
-                            self.config["conveyor"]["warehouse"]["auth"]["password"],
-                        )
+        warehouse = forklift.Forklift(
+                        session=requests.session(auth=(
+                                self.config["conveyor"]["warehouse"]["auth"]["username"],
+                                self.config["conveyor"]["warehouse"]["auth"]["password"],
+                            ))
                     )
 
         session = requests.session(verify=self.config["conveyor"].get("verify", True))
