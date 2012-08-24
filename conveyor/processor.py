@@ -231,14 +231,15 @@ class Processor(object):
 
     def sync_files(self, release, version):
         # Determine if any files need to be deleted
-        warehouse_files = set([f["filename"] for f in self.warehouse.files.get(version__project__name=release["name"], version__version=release["version"], limit=10000)["objects"]])
+        warehouse_files = set([f.filename for f in version.files])
         local_files = set([x["filename"] for x in release["files"]])
         deleted = warehouse_files - local_files
 
         # Delete any files that need to be deleted
         for filename in deleted:
             logger.info("Deleting the file '%s' from '%s' version '%s'", filename, release["name"], release["version"])
-            self.warehouse.files(filename).delete()
+
+        self.warehouse.files.objects.filter(filename__in=deleted).delete()
 
         return [self.get_and_update_or_create_file(release, version, distribution) for distribution in release["files"]]
 
