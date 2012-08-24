@@ -6,9 +6,9 @@ import conveyor
 
 install_requires = [
     "APScheduler",
+    "forklift",
     "PyYAML",
     "redis",
-    "slumber",
     "xmlrpc2",
 ]
 
