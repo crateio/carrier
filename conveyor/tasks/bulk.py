@@ -19,7 +19,7 @@ def get_jobs(last=0):
 
     app = Conveyor()
 
-    for package in set(app.processor.client.list_packages()):
+    for package in set(app.processor.pypi.list_packages()):
         yield package
 
 
@@ -37,7 +37,7 @@ def handle_job(name):
                 # Process the Name
                 app.processor.warehouse.projects.objects.get_or_create(name=name)
 
-                package = Package(app.processor.client, name)
+                package = Package(app.processor.pypi, name)
 
                 for release in package.releases():
                     app.processor.sync_release(release)

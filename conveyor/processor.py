@@ -52,7 +52,7 @@ class Processor(object):
         super(Processor, self).__init__(*args, **kwargs)
 
         self.warehouse = warehouse
-        self.client = pypi
+        self.pypi = pypi
         self.store = store
 
     def compute_hash(self, release):
@@ -302,7 +302,7 @@ class Processor(object):
         self.warehouse.projects.objects.filter(name=project).delete()
 
     def update(self, name, version, timestamp, action, matches):
-        package = Package(self.client, name, version)
+        package = Package(self.pypi, name, version)
 
         for release in package.releases():
             self.sync_release(release)
@@ -354,7 +354,7 @@ class Processor(object):
             #(re.compile("^remove (Owner|Maintainer) .+$"), remove_user_role),  # @@@ Do Something
         ])
 
-        changes = self.client.changelog(since)
+        changes = self.pypi.changelog(since)
 
         if changes:
             if isinstance(changes[0], basestring):
