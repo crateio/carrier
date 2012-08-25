@@ -15,7 +15,7 @@ import pytz
 import requests
 import xmlrpc2.client
 
-from conveyor.utils import DictDiffer, clean_url
+from conveyor.utils import clean_url
 
 
 _normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
