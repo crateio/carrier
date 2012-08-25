@@ -49,15 +49,9 @@ def get(d, attr, default=None):
     return value
 
 
-def get_key(prefix, key):
-    if not prefix is None:
-        return "%s:%s" % (prefix, key)
-    return key
-
-
 class Processor(object):
 
-    def __init__(self, index, warehouse, session=None, store=None, store_prefix=None, *args, **kwargs):
+    def __init__(self, index, warehouse, session=None, store=None, *args, **kwargs):
         super(Processor, self).__init__(*args, **kwargs)
 
         if session is None:
@@ -68,7 +62,6 @@ class Processor(object):
         self.client = xmlrpc2.client.Client(index, session=self.session)
         self.warehouse = warehouse
         self.store = store
-        self.store_prefix = store_prefix
 
     def get_releases(self, name, version=None):
         if version is None:
@@ -160,7 +153,7 @@ class Processor(object):
         return self._computed_hash
 
     def release_changed(self, release):
-        key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
+        key = "pypi:process:%s:%s" % (release["name"], release["version"])
 
         stored_hash = self.store.get(key)
         computed_hash = self.compute_hash(release)
@@ -168,7 +161,7 @@ class Processor(object):
         return not (stored_hash and stored_hash == computed_hash)
 
     def store_release_hash(self, release):
-        key = get_key(self.store_prefix, "pypi:process:%s:%s" % (release["name"], release["version"]))
+        key = "pypi:process:%s:%s" % (release["name"], release["version"])
         self.store.set(key, self.compute_hash(release))
 
     def get_and_update_or_create_version(self, release, project):
@@ -367,7 +360,7 @@ class Processor(object):
         return data
 
     def delete_project_version(self, package, version):
-        key = get_key(self.store_prefix, "pypi:process:%s:%s" % (package, version))
+        key = "pypi:process:%s:%s" % (package, version)
 
         logger.info("Deleting version '%s' of '%s'", version, package)
 
@@ -375,7 +368,7 @@ class Processor(object):
         self.warehouse.versions.objects.filter(project__name=package, version=version).delete()
 
     def delete_project(self, project):
-        search_key = get_key(self.store_prefix, "pypi:process:%s:*" % project)
+        search_key = "pypi:process:%s:*" % project
 
         logger.info("Deleting '%s'", project)
 
@@ -406,10 +399,10 @@ class Processor(object):
             raise RuntimeError("Unknown Action passed to delete()")
 
         if version is None:
-            key_pattern = get_key(self.store_prefix, "pypi:process:%s:*" % name)
+            key_pattern = "pypi:process:%s:*" % name
             keys = self.store.keys(key_pattern)
         else:
-            keys = [get_key(self.store_prefix, "pypi:process:%s:%s" % (name, version))]
+            keys = ["pypi:process:%s:%s" % (name, version)]
 
         for key in keys:
             self.store.delete(key)
@@ -421,7 +414,7 @@ class Processor(object):
 
         current = time.mktime(datetime.datetime.utcnow().timetuple())
 
-        since = int(float(self.store.get(get_key(self.store_prefix, "pypi:since")))) - 10
+        since = int(float(self.store.get("pypi:since"))) - 10
 
         dispatch = collections.OrderedDict([
             (re.compile("^create$"), self.update),
@@ -443,7 +436,7 @@ class Processor(object):
 
         for name, version, timestamp, action in changes:
             action_hash = hashlib.sha512(":".join([str(x) for x in [name, version, timestamp, action]])).hexdigest()[:32]
-            action_key = get_key(self.store_prefix, "pypi:changelog:%s" % action_hash)
+            action_key = "pypi:changelog:%s" % action_hash
 
             logdata = {"action": action, "name": name, "version": version, "timestamp": timestamp}
 
@@ -461,6 +454,6 @@ class Processor(object):
             else:
                 logger.debug("Skipping %(name)s %(version)s %(timestamp)s %(action)s" % logdata)
 
-        self.store.set(get_key(self.store_prefix, "pypi:since"), current)
+        self.store.set("pypi:since", current)
 
         logger.info("Finished changed projects synchronization")
