@@ -216,10 +216,11 @@ class Processor(object):
         deleted = warehouse_files - local_files
 
         # Delete any files that need to be deleted
-        for filename in deleted:
-            logger.info("Deleting the file '%s' from '%s' version '%s'", filename, release["name"], release["version"])
+        if deleted:
+            for filename in deleted:
+                logger.info("Deleting the file '%s' from '%s' version '%s'", filename, release["name"], release["version"])
 
-        self.warehouse.files.objects.filter(filename__in=deleted).delete()
+            self.warehouse.files.objects.filter(filename__in=deleted).delete()
 
         return [self.get_and_update_or_create_file(release, version, distribution) for distribution in release["files"]]
 
