@@ -5,7 +5,6 @@ import time
 from requests.exceptions import ConnectionError, HTTPError
 
 from .core import Conveyor
-from .pypi import Package
 
 
 logger = logging.getLogger(__name__)
@@ -33,14 +32,7 @@ def handle_job(name):
                 tried += 1
 
                 app = Conveyor()
-
-                # Process the Name
-                app.processor.warehouse.projects.objects.get_or_create(name=name)
-
-                package = Package(app.processor.pypi, name)
-
-                for release in package.releases():
-                    app.processor.sync_release(release)
+                app.update(name)
 
                 break
             except (ConnectionError, HTTPError):

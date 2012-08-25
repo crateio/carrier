@@ -141,30 +141,6 @@ class Processor(object):
 
         return [self.get_and_update_or_create_file(release, version, distribution) for distribution in release["files"]]
 
-    def sync_release(self, release):
-        if "/" in release["version"]:
-            # We cannot accept versions with a / in it.
-            logger.error("Skipping '%s' version '%s' because it contains a '/'", release["name"], release["version"])
-            return
-
-        if not self.release_changed(release):
-            logger.info("Skipping '%s' version '%s' because it has not changed", release["name"], release["version"])
-            return
-
-        logger.info("Syncing '%s' version '%s'", release["name"], release["version"])
-
-        project, _ = self.warehouse.projects.objects.get_or_create(name=release["name"])
-        version = self.get_and_update_or_create_version(release, project)
-        files = self.sync_files(release, version)
-
-        self.store_release_hash(release)
-
-        return {
-            "project": project,
-            "version": version,
-            "files": files,
-        }
-
     def to_warehouse_version(self, release, extra=None):
         data = {
             "version": release["version"],
@@ -301,11 +277,28 @@ class Processor(object):
 
         self.warehouse.projects.objects.filter(name=project).delete()
 
-    def update(self, name, version, timestamp, action, matches):
+    def update(self, name, version=None, timestamp=None, action=None, matches=None):
         package = Package(self.pypi, name, version)
 
+        # Process the Name
+        project, _ = self.warehouse.projects.objects.get_or_create(name=name)
+
         for release in package.releases():
-            self.sync_release(release)
+            if "/" in release["version"]:
+                # We cannot accept versions with a / in it.
+                logger.error("Skipping '%s' version '%s' because it contains a '/'", release["name"], release["version"])
+                continue
+
+            if not self.release_changed(release):
+                logger.info("Skipping '%s' version '%s' because it has not changed", release["name"], release["version"])
+                continue
+
+            logger.info("Syncing '%s' version '%s'", release["name"], release["version"])
+
+            version = self.get_and_update_or_create_version(release, project)
+            self.sync_files(release, version)
+
+            self.store_release_hash(release)
 
     def delete(self, name, version, timestamp, action, matches):
         filename = None
