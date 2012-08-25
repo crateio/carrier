@@ -2,16 +2,11 @@ from __future__ import absolute_import
 from __future__ import division
 
 
-import bz2
-import csv
 import logging
 import logging.config
-import io
 import time
-import urlparse
 
 import forklift
-import lxml.html
 import redis
 import requests
 import yaml
