@@ -11,9 +11,6 @@ import json
 import re
 import time
 
-import requests
-import xmlrpc2.client
-
 from .pypi import Package
 from .utils import clean_url
 
@@ -51,16 +48,11 @@ def get(d, attr, default=None):
 
 class Processor(object):
 
-    def __init__(self, index, warehouse, session=None, store=None, *args, **kwargs):
+    def __init__(self, warehouse, pypi, store, *args, **kwargs):
         super(Processor, self).__init__(*args, **kwargs)
 
-        if session is None:
-            session = requests.session()
-
-        self.session = session
-
-        self.client = xmlrpc2.client.Client(index, session=self.session)
         self.warehouse = warehouse
+        self.client = pypi
         self.store = store
 
     def compute_hash(self, release):
