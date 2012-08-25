@@ -4,10 +4,12 @@ import time
 
 import forklift
 import requests
+import xmlrpc2.client
 
 from requests.exceptions import ConnectionError, HTTPError
 
 from conveyor.core import Conveyor
+from .pypi import Package
 from conveyor.processor import Processor
 
 logger = logging.getLogger(__name__)
@@ -71,6 +73,8 @@ def handle_job(name):
 
                 session = requests.session(verify=app.config["conveyor"].get("verify", True))
 
+                client = xmlrpc2.client.Client(app.config["conveyor"]["index"], session=session)
+
                 processor = Processor(
                                 index=app.config["conveyor"]["index"],
                                 warehouse=warehouse,
@@ -81,7 +85,9 @@ def handle_job(name):
                 # Process the Name
                 warehouse.projects.objects.get_or_create(name=name)
 
-                for release in processor.get_releases(name):
+                package = Package(client, name)
+
+                for release in package.releases():
                     processor.sync_release(release)
 
                 break

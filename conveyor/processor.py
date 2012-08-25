@@ -15,6 +15,7 @@ import pytz
 import requests
 import xmlrpc2.client
 
+from .pypi import Package
 from conveyor.utils import clean_url
 
 
@@ -62,74 +63,6 @@ class Processor(object):
         self.client = xmlrpc2.client.Client(index, session=self.session)
         self.warehouse = warehouse
         self.store = store
-
-    def get_releases(self, name, version=None):
-        if version is None:
-            versions = self.client.package_releases(name, True)
-
-            if isinstance(versions, basestring):
-                versions = [versions]
-        else:
-            versions = [version]
-
-        for version in versions:
-            item = self.client.release_data(name, version)
-
-            if not item:
-                continue
-
-            url = self.client.release_urls(item["name"], item["version"])
-
-            if isinstance(url, collections.Mapping):
-                urls = [url]
-            elif isinstance(url, collections.Iterable):
-                urls = url
-            else:
-                raise RuntimeError("Do not understand the type returned by release_urls")
-
-            # fix classifiers
-            item["classifiers"] = sorted(set(get(item, "classifiers", [])))
-
-            files = []
-
-            oldest = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-
-            for url in urls:
-                data = url.copy()
-
-                try:
-                    resp = self.session.get(data["url"], prefetch=True)
-                    resp.raise_for_status()
-                except Exception:
-                    # @@@ Catch the proper exceptions (and do what?)
-                    raise
-
-                if oldest > data["upload_time"]:
-                    oldest = data["upload_time"]
-
-                data["file_data"] = base64.b64encode(resp.content)
-                files.append(data)
-
-            item.update({
-                "normalized": _normalize_regex.sub("-", item["name"]).lower(),
-                "files": files,
-            })
-
-            if files:
-                item["guessed_creation"] = oldest
-
-            # Clean up some of the fields that we don't use
-            remove_fields = set([
-                "_pypi_hidden",
-                "_pypi_ordering",
-                "cheesecake_code_kwalitee_id",
-                "cheesecake_documentation_id",
-                "cheesecake_installability_id",
-            ])
-
-            item = dict([(k, v) for k, v in item.items() if k not in remove_fields])
-
-            yield item
 
     def compute_hash(self, release):
         def _dict_constant_data_structure(dictionary):
@@ -378,7 +311,9 @@ class Processor(object):
         self.warehouse.projects.objects.filter(name=project).delete()
 
     def update(self, name, version, timestamp, action, matches):
-        for release in self.get_releases(name, version=version):
+        package = Package(self.client, name, version)
+
+        for release in package.releases():
             self.sync_release(release)
 
     def delete(self, name, version, timestamp, action, matches):
