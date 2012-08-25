@@ -38,7 +38,6 @@ def get_jobs(last=0):
                         warehouse=warehouse,
                         session=session,
                         store=app.redis,
-                        store_prefix=app.config.get("redis", {}).get("prefix", None)
                     )
 
         names = set(processor.client.list_packages())
@@ -77,7 +76,6 @@ def handle_job(name):
                                 warehouse=warehouse,
                                 session=session,
                                 store=app.redis,
-                                store_prefix=app.config.get("redis", {}).get("prefix", None)
                             )
 
                 # Process the Name

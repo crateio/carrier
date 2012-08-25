@@ -40,7 +40,7 @@ class Conveyor(object):
 
         logging.config.dictConfig(self.config["logging"])
 
-        self.redis = redis.StrictRedis(**self.config.get("redis", {}).get("connection", {}))
+        self.redis = redis.StrictRedis(**self.config.get("redis", {}))
 
     def run(self):
         self.scheduler = Scheduler()
@@ -76,7 +76,6 @@ class Conveyor(object):
                         warehouse=warehouse,
                         session=session,
                         store=self.redis,
-                        store_prefix=self.config.get("redis", {}).get("prefix", None)
                     )
 
         processor.process()
