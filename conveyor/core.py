@@ -15,7 +15,7 @@ import xmlrpc2.client
 from apscheduler.scheduler import Scheduler
 
 from .config import Config, defaults
-from conveyor.processor import Processor
+from .processor import Processor
 
 
 logger = logging.getLogger(__name__)
