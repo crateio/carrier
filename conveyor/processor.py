@@ -171,9 +171,9 @@ class Processor(object):
         self.store.set(key, self.compute_hash(release))
 
     def get_and_update_or_create_version(self, release, project):
-        version_data = self.to_warehouse_version(release)
+        version_data = self.to_warehouse_version(release, extra={"project": project})
 
-        version, created = self.warehouse.versions.objects.get_or_create(project=project, version=release["version"], defaults=version_data)
+        version, created = self.warehouse.versions.objects.get_or_create(project__name=project.name, version=release["version"], defaults=version_data)
 
         if not created:
             version.classifiers = sorted(version.classifiers)
