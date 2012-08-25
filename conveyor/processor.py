@@ -174,7 +174,7 @@ class Processor(object):
     def get_and_update_or_create_version(self, release, project):
         version_data = self.to_warehouse_version(release, extra={"project": project})
 
-        version, created = self.warehouse.versions.objects.get_or_create(project__name=project.name, version=release["version"], defaults=version_data)
+        version, created = self.warehouse.versions.objects.get_or_create(project__name=project.name, version=release["version"], show_yanked=True, defaults=version_data)
 
         if not created:
             version.classifiers = sorted(version.classifiers)
@@ -194,7 +194,7 @@ class Processor(object):
     def get_and_update_or_create_file(self, release, version, distribution):
         file_data = self.to_warehouse_file(release, distribution, extra={"version": version})
 
-        vfile, created = self.warehouse.files.objects.get_or_create(filename=file_data["filename"], defaults=file_data)
+        vfile, created = self.warehouse.files.objects.get_or_create(filename=file_data["filename"], show_yanked=True, defaults=file_data)
 
         if not created:
             changed = False
