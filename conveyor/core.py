@@ -33,8 +33,7 @@ class Conveyor(object):
         # Initalize app
         logging.config.dictConfig(self.config["LOGGING"])
 
-        self.redis = redis.StrictRedis(**dict([(k.lower, v) for k, v in self.config["REDIS"].items()]))
-        self.scheduler = None
+        store = redis.StrictRedis(**dict([(k.lower, v) for k, v in self.config["REDIS"].items()]))
 
         wsession = requests.session(auth=(
                         self.config["WAREHOUSE_AUTH"]["USERNAME"],
@@ -45,13 +44,13 @@ class Conveyor(object):
         psession = requests.session(verify=self.config["PYPI_SSL_VERIFY"])
         pypi = xmlrpc2.client.Client(self.config["PYPI_URI"], session=psession)
 
-        self.processor = Processor(warehouse, pypi, self.redis)
+        self.processor = Processor(warehouse, pypi, store)
 
     def run(self):
         self.scheduler = Scheduler()
 
         if self.config["SCHEDULE"].get("packages") is not None:
-            self.scheduler.add_interval_job(self.packages, **self.config["SCHEDULE"]["packages"])
+            self.scheduler.add_interval_job(self.processor.process, **self.config["SCHEDULE"]["packages"])
 
         self.scheduler.start()
 
@@ -61,10 +60,3 @@ class Conveyor(object):
         except KeyboardInterrupt:
             logger.info("Shutting down Conveyor...")
             self.scheduler.shutdown(wait=False)
-
-    def packages(self):
-        if not self.redis.get("pypi:since"):
-            # This is the first time we've ran so we need to do a bulk import
-            raise Exception(" Cannot process changes with no value for the last successful run.")
-
-        self.processor.process()

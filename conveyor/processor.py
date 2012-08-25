@@ -338,6 +338,10 @@ class Processor(object):
     def process(self):
         logger.info("Starting changed projects synchronization")
 
+        if not self.store.get("pypi:since"):
+            # This is the first time we've ran so we need to do a bulk import
+            raise RuntimeError(" Cannot process changes with no value for the last successful run.")
+
         current = time.mktime(datetime.datetime.utcnow().timetuple())
 
         since = int(float(self.store.get("pypi:since"))) - 10
