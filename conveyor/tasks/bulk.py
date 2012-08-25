@@ -31,9 +31,12 @@ def get_jobs(last=0):
                         )
                     )
 
+        session = requests.session(verify=app.config["conveyor"].get("verify", True))
+
         processor = Processor(
                         index=app.config["conveyor"]["index"],
                         warehouse=warehouse,
+                        session=session,
                         store=app.redis,
                         store_prefix=app.config.get("redis", {}).get("prefix", None)
                     )
@@ -67,9 +70,12 @@ def handle_job(name):
                                 )
                             )
 
+                session = requests.session(verify=app.config["conveyor"].get("verify", True))
+
                 processor = Processor(
                                 index=app.config["conveyor"]["index"],
                                 warehouse=warehouse,
+                                session=session,
                                 store=app.redis,
                                 store_prefix=app.config.get("redis", {}).get("prefix", None)
                             )
