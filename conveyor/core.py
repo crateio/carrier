@@ -47,16 +47,16 @@ class Conveyor(object):
         self.processor = Processor(warehouse, pypi, store)
 
     def run(self):
-        self.scheduler = Scheduler()
+        scheduler = Scheduler()
 
         if self.config["SCHEDULE"].get("packages") is not None:
-            self.scheduler.add_interval_job(self.processor.process, **self.config["SCHEDULE"]["packages"])
+            scheduler.add_interval_job(self.processor.process, **self.config["SCHEDULE"]["packages"])
 
-        self.scheduler.start()
+        scheduler.start()
 
         try:
             while True:
                 time.sleep(999)
         except KeyboardInterrupt:
             logger.info("Shutting down Conveyor...")
-            self.scheduler.shutdown(wait=False)
+            scheduler.shutdown(wait=False)
