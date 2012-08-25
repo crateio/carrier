@@ -98,7 +98,7 @@ def handle_job(name):
                 else:
                     # Wait a moment
                     time.sleep(delay)
-                    delay * 2
+                    delay = delay * 2
     except Exception as e:
         logger.exception(str(e))
         raise
