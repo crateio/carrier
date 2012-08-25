@@ -64,8 +64,8 @@ class Conveyor(object):
 
         warehouse = forklift.Forklift(
                         session=requests.session(auth=(
-                                self.config["conveyor"]["warehouse"]["auth"]["username"],
-                                self.config["conveyor"]["warehouse"]["auth"]["password"],
+                                self.config["conveyor"]["warehouse"]["username"],
+                                self.config["conveyor"]["warehouse"]["password"],
                             ))
                     )
 

@@ -25,8 +25,8 @@ def get_jobs(last=0):
         warehouse = forklift.Forklift(
                         session=requests.session(
                                     auth=(
-                                        app.config["conveyor"]["warehouse"]["auth"]["username"],
-                                        app.config["conveyor"]["warehouse"]["auth"]["password"]
+                                        app.config["conveyor"]["warehouse"]["username"],
+                                        app.config["conveyor"]["warehouse"]["password"]
                                     )
                         )
                     )
@@ -64,8 +64,8 @@ def handle_job(name):
                 warehouse = forklift.Forklift(
                                 session=requests.session(
                                             auth=(
-                                                app.config["conveyor"]["warehouse"]["auth"]["username"],
-                                                app.config["conveyor"]["warehouse"]["auth"]["password"]
+                                                app.config["conveyor"]["warehouse"]["username"],
+                                                app.config["conveyor"]["warehouse"]["password"]
                                             )
                                 )
                             )
