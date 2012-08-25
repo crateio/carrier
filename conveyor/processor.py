@@ -15,7 +15,7 @@ import requests
 import xmlrpc2.client
 
 from .pypi import Package
-from conveyor.utils import clean_url
+from .utils import clean_url
 
 
 _normalize_regex = re.compile(r"[^A-Za-z0-9.]+")

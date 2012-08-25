@@ -8,9 +8,9 @@ import xmlrpc2.client
 
 from requests.exceptions import ConnectionError, HTTPError
 
-from conveyor.core import Conveyor
+from .core import Conveyor
 from .pypi import Package
-from conveyor.processor import Processor
+from .processor import Processor
 
 logger = logging.getLogger(__name__)
 
