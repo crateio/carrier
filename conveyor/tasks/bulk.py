@@ -81,7 +81,7 @@ def handle_job(name):
                             )
 
                 # Process the Name
-                processor.get_or_create_project(name)
+                warehouse.projects.objects.get_or_create(name=name)
 
                 for release in processor.get_releases(name):
                     processor.sync_release(release)
