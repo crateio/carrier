@@ -11,7 +11,6 @@ import json
 import re
 import time
 
-import pytz
 import requests
 import xmlrpc2.client
 
