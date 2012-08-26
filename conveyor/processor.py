@@ -107,17 +107,22 @@ class Processor(object):
 
         if action == "remove":
             if version is None:
-                obj = self.warehouse.projects.objects.filter(name=name).get()
+                obj = self.warehouse.projects.objects.filter(name=name)
                 logger.info("Deleting '%s'", name)
             else:
-                obj = self.warehouse.versions.objects.filter(project__name=name, version=version).get()
+                obj = self.warehouse.versions.objects.filter(project__name=name, version=version)
                 logger.info("Deleting '%s' version '%s'", name, version)
         elif action.startswith("remove file"):
             filename = matches.groups()[0]
-            obj = self.warehouse.files.objects.get(filename=filename)
+            obj = self.warehouse.files.objects.filter(filename=filename)
             logger.info("Deleting '%s' version '%s' filename '%s'", name, version, filename)
         else:
             raise RuntimeError("Unknown Action passed to delete()")
+
+        try:
+            obj = obj.get()
+        except obj.resource.DoesNotExist:
+            return
 
         if version is None:
             key_pattern = "pypi:process:%s:*" % name
