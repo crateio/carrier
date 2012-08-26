@@ -8,6 +8,7 @@ install_requires = [
     "APScheduler",
     "forklift",
     "redis",
+    "six",
     "xmlrpc2",
 ]
 
