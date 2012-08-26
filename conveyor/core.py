@@ -36,7 +36,7 @@ class Conveyor(object):
         # Initalize app
         logging.config.dictConfig(self.config["LOGGING"])
 
-        store = redis.StrictRedis(**dict([(k.lower, v) for k, v in self.config["REDIS"].items()]))
+        store = redis.StrictRedis(**dict([(k.lower(), v) for k, v in self.config["REDIS"].items()]))
 
         wsession = requests.session(auth=(
                         self.config["WAREHOUSE_AUTH"]["USERNAME"],
