@@ -2,51 +2,24 @@ import datetime
 import logging
 import time
 
-import forklift
-import requests
-
 from requests.exceptions import ConnectionError, HTTPError
 
-from conveyor.core import Conveyor
-from conveyor.processor import Processor
+from ..core import Conveyor
+
 
 logger = logging.getLogger(__name__)
 
 
 # We ignore the last component as we cannot properly handle it
 def get_jobs(last=0):
-    try:
-        current = time.mktime(datetime.datetime.utcnow().timetuple())
+    current = time.mktime(datetime.datetime.utcnow().timetuple())
 
-        app = Conveyor()
+    logger.info("Current time is '%s'", current)
 
-        logger.info("Current time is '%s'", current)
+    app = Conveyor()
 
-        warehouse = forklift.Forklift(
-                        session=requests.session(
-                                    auth=(
-                                        app.config["conveyor"]["warehouse"]["username"],
-                                        app.config["conveyor"]["warehouse"]["password"]
-                                    )
-                        )
-                    )
-
-        session = requests.session(verify=app.config["conveyor"].get("verify", True))
-
-        processor = Processor(
-                        index=app.config["conveyor"]["index"],
-                        warehouse=warehouse,
-                        session=session,
-                        store=app.redis,
-                    )
-
-        names = set(processor.client.list_packages())
-
-        for package in names:
-            yield package
-    except Exception as e:
-        logger.exception(str(e))
-        raise
+    for package in set(app.processor.pypi.list_packages()):
+        yield package
 
 
 def handle_job(name):
@@ -59,30 +32,7 @@ def handle_job(name):
                 tried += 1
 
                 app = Conveyor()
-
-                warehouse = forklift.Forklift(
-                                session=requests.session(
-                                            auth=(
-                                                app.config["conveyor"]["warehouse"]["username"],
-                                                app.config["conveyor"]["warehouse"]["password"]
-                                            )
-                                )
-                            )
-
-                session = requests.session(verify=app.config["conveyor"].get("verify", True))
-
-                processor = Processor(
-                                index=app.config["conveyor"]["index"],
-                                warehouse=warehouse,
-                                session=session,
-                                store=app.redis,
-                            )
-
-                # Process the Name
-                warehouse.projects.objects.get_or_create(name=name)
-
-                for release in processor.get_releases(name):
-                    processor.sync_release(release)
+                app.processor.update(name)
 
                 break
             except (ConnectionError, HTTPError):
@@ -92,7 +42,7 @@ def handle_job(name):
                 else:
                     # Wait a moment
                     time.sleep(delay)
-                    delay * 2
+                    delay = delay * 2
     except Exception as e:
         logger.exception(str(e))
         raise

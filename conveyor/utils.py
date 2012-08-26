@@ -1,6 +1,33 @@
-import posixpath
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+
 import re
 import urlparse
+
+
+class NormalizingDict(dict):
+
+    def pop(self, key, default=None):
+        value = super(NormalizingDict, self).pop(key, default)
+        if not value or value in ["UNKNOWN", "None"]:
+            value = default
+        return value
+
+
+_distutils2_version_capture = re.compile("^(.*?)(?:\(([^()]+)\))?$")
+
+
+def split_meta(meta):
+    meta_split = meta.split(";", 1)
+    meta_name, meta_version = _distutils2_version_capture.search(meta_split[0].strip()).groups()
+    meta_env = meta_split[1].strip() if len(meta_split) == 2 else ""
+
+    return {
+        "name": meta_name,
+        "version": meta_version if meta_version is not None else "",
+        "environment": meta_env,
+    }
 
 
 _url = re.compile(
@@ -13,16 +40,7 @@ _url = re.compile(
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
 
-def splitext(path):
-    """Like os.path.splitext, but take off .tar too"""
-    base, ext = posixpath.splitext(path)
-    if base.lower().endswith('.tar'):
-        ext = base[-4:] + ext
-        base = base[:-4]
-    return base, ext
-
-
-def clean_url(url):
+def clean_uri(url):
     parts = list(urlparse.urlsplit(url))
 
     if not parts[0]:

@@ -7,8 +7,8 @@ import conveyor
 install_requires = [
     "APScheduler",
     "forklift",
-    "PyYAML",
     "redis",
+    "six",
     "xmlrpc2",
 ]
 
@@ -27,5 +27,12 @@ setup(
     install_requires=install_requires,
 
     packages=find_packages(exclude=["tests"]),
+    package_data={"": ["LICENSE"], "conveyor": ["config/*.crt"]},
     zip_safe=False,
+
+    entry_points={
+        "console_scripts": [
+            "conveyor = conveyor.__main__:main",
+        ],
+    },
 )
