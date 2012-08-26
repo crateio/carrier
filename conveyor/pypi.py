@@ -34,6 +34,26 @@ class File(object):
 
         super(File, self).__init__(*args, **kwargs)
 
+    def serialize(self):
+        data = {
+            "file": {
+                "name": self.filename,
+                "file": self.data,
+            },
+            "created": self.created,
+            "type": self.type,
+            "python_version": self.python_version,
+            "comment": self.comment,
+            "filename": self.filename,
+            "filesize": self._size,
+            "digests": {
+                "md5": hashlib.md5(base64.b64decode(self.data)).hexdigest(),
+                "sha256": hashlib.sha256(base64.b64decode(self.data)).hexdigest(),
+            },
+        }
+
+        return data
+
 
 class Release(object):
 

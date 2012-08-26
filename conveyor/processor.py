@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-import base64
 import collections
 import datetime
 import hashlib
@@ -22,18 +21,6 @@ logger = logging.getLogger(__name__)
 
 
 EXPECTED = set(["resource_uri", "downloads", "modified"])
-
-
-def split_meta(meta):
-    meta_split = meta.split(";", 1)
-    meta_name, meta_version = _distutils2_version_capture.search(meta_split[0].strip()).groups()
-    meta_env = meta_split[1].strip() if len(meta_split) == 2 else ""
-
-    return {
-        "name": meta_name,
-        "version": meta_version if meta_version is not None else "",
-        "environment": meta_env,
-    }
 
 
 def get(d, attr, default=None):
@@ -149,26 +136,7 @@ class Processor(object):
         return data
 
     def to_warehouse_file(self, release, file, extra=None):
-        data = {
-            "file": {"name": file["filename"], "file": file["file_data"]},
-            "created": file["upload_time"].isoformat(),
-            "type": file["packagetype"],
-            "python_version": file["python_version"],
-            "comment": file["comment_text"],
-
-            "yanked": False,
-        }
-
-        raw_data = base64.b64decode(file["file_data"])
-
-        data.update({
-            "digests": {
-                "md5": hashlib.md5(raw_data).hexdigest(),
-                "sha256": hashlib.sha256(raw_data).hexdigest(),
-            },
-            "filesize": len(raw_data),
-            "filename": file["filename"],
-        })
+        data = file.serialize()
 
         if extra is not None:
             data.update(extra)
