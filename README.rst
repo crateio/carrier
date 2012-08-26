@@ -1,15 +1,15 @@
-Conveyor: Warehouse and PyPI Synchronization
-============================================
+Carrier: Warehouse and PyPI Synchronization
+===========================================
 
-Conveyor is a BSD Licensed Python application for keeping a Warehouse instance
+Carrier is a BSD Licensed Python application for keeping a Warehouse instance
 and PyPI synchronized.
 
-Conveyor utilized the xmlrpc and pubhubsubbub API of PyPI to keep a Warehouse
+Carrier utilizes the xmlrpc and pubhubsubbub API of PyPI to keep a Warehouse
 instance up to date with PyPI. It can also utilize webhooks from Warehouse to
 propagate changes made in Warehouse to PyPI. It enables a clean separation of
 Warehouse and PyPI.
 
-Conveyor is part of the Crate project, a set of applications, tools, and libraries
+Carrier is part of the Crate project, a set of applications, tools, and libraries
 for creating, distributing, and installing Python packages in a secure, efficient,
 and reliable way.
 
@@ -22,9 +22,9 @@ Resources
 * Code_
 * IRC_ *(irc.freenode.net, #crate)*
 
-.. _Documentation: https://docs.crate.io/conveyor/
-.. _`Bug Tracker`: https://github.com/crateio/conveyor/issues
-.. _Code: https://github.com/crateio/conveyor/
+.. _Documentation: https://docs.crate.io/carrier/
+.. _`Bug Tracker`: https://github.com/crateio/carrier/issues
+.. _Code: https://github.com/crateio/carrier/
 .. _IRC: http://webchat.freenode.net?channels=crate
 
 Contribute
@@ -37,4 +37,4 @@ Contribute
 3. Write a test which shows that the bug was fixed or that the feature works as expected.
 4. Send a pull request and bug the maintainer until it gets merged and published.
 
-.. _`the repository`: https://github.com/crateio/conveyor/
+.. _`the repository`: https://github.com/crateio/carrier/

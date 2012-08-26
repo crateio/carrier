@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from setuptools import setup, find_packages
 
-import conveyor
+import carrier
 
 
 install_requires = [
@@ -13,12 +13,12 @@ install_requires = [
 ]
 
 setup(
-    name="conveyor",
-    version=conveyor.__version__,
+    name="carrier",
+    version=carrier.__version__,
 
     description="Warehouse and PyPI Synchronization",
     long_description=open("README.rst").read(),
-    url="https://github.com/crateio/conveyor/",
+    url="https://github.com/crateio/carrier/",
     license=open("LICENSE").read(),
 
     author="Donald Stufft",
@@ -27,12 +27,12 @@ setup(
     install_requires=install_requires,
 
     packages=find_packages(exclude=["tests"]),
-    package_data={"": ["LICENSE"], "conveyor": ["config/*.crt"]},
+    package_data={"": ["LICENSE"], "carrier": ["config/*.crt"]},
     zip_safe=False,
 
     entry_points={
         "console_scripts": [
-            "conveyor = conveyor.__main__:main",
+            "carrier = carrier.__main__:main",
         ],
     },
 )
