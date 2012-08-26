@@ -27,7 +27,7 @@ class Processor(object):
     def get_and_update_or_create_version(self, release, project):
         version_data = self.to_warehouse_version(release, extra={"project": project})
 
-        version, created = self.warehouse.versions.objects.get_or_create(project__name=project.name, version=release["version"], show_yanked=True, defaults=version_data)
+        version, created = self.warehouse.versions.objects.get_or_create(project__name=project.name, version=release.version, show_yanked=True, defaults=version_data)
 
         if not created:
             version.classifiers = sorted(version.classifiers)
@@ -65,17 +65,17 @@ class Processor(object):
     def sync_files(self, release, version):
         # Determine if any files need to be deleted
         warehouse_files = set([f.filename for f in version.files])
-        local_files = set([x["filename"] for x in release["files"]])
+        local_files = set([x.filename for x in release.files])
         deleted = warehouse_files - local_files
 
         # Delete any files that need to be deleted
         if deleted:
             for filename in deleted:
-                logger.info("Deleting the file '%s' from '%s' version '%s'", filename, release["name"], release["version"])
+                logger.info("Deleting the file '%s' from '%s' version '%s'", filename, release.name, release.version)
 
             self.warehouse.files.objects.filter(filename__in=deleted).delete()
 
-        return [self.get_and_update_or_create_file(release, version, distribution) for distribution in release["files"]]
+        return [self.get_and_update_or_create_file(release, version, distribution) for distribution in release.files]
 
     def to_warehouse_version(self, release, extra=None):
         data = release.serialize()
@@ -120,14 +120,14 @@ class Processor(object):
         for release in package.releases():
             if "/" in release["version"]:
                 # We cannot accept versions with a / in it.
-                logger.error("Skipping '%s' version '%s' because it contains a '/'", release["name"], release["version"])
+                logger.error("Skipping '%s' version '%s' because it contains a '/'", release.name, release.version)
                 continue
 
-            if not release.changed(self.store.get("pypi:process:%s:%s" % (release["name"], release["version"]))):
-                logger.info("Skipping '%s' version '%s' because it has not changed", release["name"], release["version"])
+            if not release.changed(self.store.get("pypi:process:%s:%s" % (release.name, release.version))):
+                logger.info("Skipping '%s' version '%s' because it has not changed", release.name, release.version)
                 continue
 
-            logger.info("Syncing '%s' version '%s'", release["name"], release["version"])
+            logger.info("Syncing '%s' version '%s'", release.name, release.version)
 
             version = self.get_and_update_or_create_version(release, project)
             self.sync_files(release, version)
