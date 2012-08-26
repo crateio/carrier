@@ -12,7 +12,6 @@ import re
 import time
 
 from .pypi import Package
-from .utils import clean_url
 
 
 _normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
@@ -142,90 +141,7 @@ class Processor(object):
         return [self.get_and_update_or_create_file(release, version, distribution) for distribution in release["files"]]
 
     def to_warehouse_version(self, release, extra=None):
-        data = {
-            "version": release["version"],
-
-            "summary": get(release, "summary", ""),
-            "description": get(release, "description", ""),
-            "license": get(release, "license", ""),
-
-            "author": get(release, "author", ""),
-            "author_email": get(release, "author_email", ""),
-
-            "maintainer":  get(release, "maintainer", ""),
-            "maintainer_email": get(release, "maintainer_email", ""),
-
-            "classifiers": get(release, "classifiers", []),
-            "uris": {},
-
-            "requires_python": get(release, "requires_python", ""),
-            "requires_external": get(release, "requires_external", []),
-
-            "platforms": [],
-            "supported_platforms": [],
-            "keywords": [],
-
-            "yanked": False,
-        }
-
-        if get(release, "download_url"):
-            data["uris"]["Download"] = release["download_url"]
-
-        if get(release, "home_page"):
-            data["uris"]["Home page"] = release["home_page"]
-
-        if get(release, "bugtrack_url"):
-            data["uris"]["Bug tracker"] = release["bugtrack_url"]
-
-        if get(release, "docs_url"):
-            data["uris"]["Documentation"] = release["docs_url"]
-
-        if get(release, "platform"):
-            platforms = get(release, "platform")
-
-            if isinstance(platforms, basestring):
-                platforms = [platforms]
-
-            data["platforms"] = platforms
-
-        if get(release, "supported_platforms"):
-            supported_platforms = get(release, "supported_platforms")
-
-            if isinstance(supported_platforms, basestring):
-                supported_platforms = [supported_platforms]
-
-            data["supported_platforms"] = supported_platforms
-
-        if get(release, "keywords"):
-            keywords = get(release, "keywords")
-
-            # Check for a comma
-            if "," in keywords:
-                keywords = [x.strip() for x in keywords.split(",")]
-            else:
-                keywords = [x.strip() for x in keywords.split()]
-
-            data["keywords"] = keywords
-
-        for url in get(release, "project_url", []):
-            label, uri = url.split(",", 1)
-            data["uris"][label] = uri
-
-        data["requires"] = [split_meta(req) for req in get(release, "requires_dist", [])]
-        data["provides"] = [split_meta(req) for req in get(release, "provides_dist", [])]
-        data["obsoletes"] = [split_meta(req) for req in get(release, "obsoletes_dist", [])]
-
-        if get(release, "guessed_creation", None) is not None:
-            data["created"] = release["guessed_creation"].isoformat()
-
-        # Clean the URI fields
-        cleaned_uris = {}
-        for k, v in data["uris"].iteritems():
-            try:
-                cleaned_uris[k] = clean_url(v)
-            except ValueError:
-                pass
-        data["uris"] = cleaned_uris
+        data = release.serialize()
 
         if extra is not None:
             data.update(extra)

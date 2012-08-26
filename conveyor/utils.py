@@ -3,6 +3,30 @@ import re
 import urlparse
 
 
+class NormalizingDict(dict):
+
+    def pop(self, key, default=None):
+        value = super(NormalizingDict, self).pop(key, default)
+        if not value or value in ["UNKNOWN", "None"]:
+            value = default
+        return value
+
+
+_distutils2_version_capture = re.compile("^(.*?)(?:\(([^()]+)\))?$")
+
+
+def split_meta(meta):
+    meta_split = meta.split(";", 1)
+    meta_name, meta_version = _distutils2_version_capture.search(meta_split[0].strip()).groups()
+    meta_env = meta_split[1].strip() if len(meta_split) == 2 else ""
+
+    return {
+        "name": meta_name,
+        "version": meta_version if meta_version is not None else "",
+        "environment": meta_env,
+    }
+
+
 _url = re.compile(
         r'^(?:http|ftp)s?://'  # http:// or https://
         r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
@@ -22,7 +46,7 @@ def splitext(path):
     return base, ext
 
 
-def clean_url(url):
+def clean_uri(url):
     parts = list(urlparse.urlsplit(url))
 
     if not parts[0]:
