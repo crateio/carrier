@@ -25,7 +25,8 @@ class Processor(object):
         self.store = store
 
     def get_and_update_or_create_version(self, release, project):
-        version_data = self.to_warehouse_version(release, extra={"project": project})
+        version_data = release.serialize()
+        version_data.update({"project": project})
 
         version, created = self.warehouse.versions.objects.get_or_create(project__name=project.name, version=release.version, show_yanked=True, defaults=version_data)
 
@@ -45,7 +46,8 @@ class Processor(object):
         return version
 
     def get_and_update_or_create_file(self, release, version, distribution):
-        file_data = self.to_warehouse_file(release, distribution, extra={"version": version})
+        file_data = distribution.serialize()
+        file_data.update({"version": version})
 
         vfile, created = self.warehouse.files.objects.get_or_create(filename=file_data["filename"], show_yanked=True, defaults=file_data)
 
@@ -76,22 +78,6 @@ class Processor(object):
             self.warehouse.files.objects.filter(filename__in=deleted).delete()
 
         return [self.get_and_update_or_create_file(release, version, distribution) for distribution in release.files]
-
-    def to_warehouse_version(self, release, extra=None):
-        data = release.serialize()
-
-        if extra is not None:
-            data.update(extra)
-
-        return data
-
-    def to_warehouse_file(self, release, file, extra=None):
-        data = file.serialize()
-
-        if extra is not None:
-            data.update(extra)
-
-        return data
 
     def delete_project_version(self, package, version):
         key = "pypi:process:%s:%s" % (package, version)
