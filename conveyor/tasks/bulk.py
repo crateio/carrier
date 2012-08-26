@@ -4,7 +4,7 @@ import time
 
 from requests.exceptions import ConnectionError, HTTPError
 
-from .core import Conveyor
+from ..core import Conveyor
 
 
 logger = logging.getLogger(__name__)
