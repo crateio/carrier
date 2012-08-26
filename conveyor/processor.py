@@ -24,10 +24,6 @@ class Processor(object):
         self.pypi = pypi
         self.store = store
 
-    def store_release_hash(self, release):
-        key = "pypi:process:%s:%s" % (release["name"], release["version"])
-        self.store.set(key, release.hash())
-
     def get_and_update_or_create_version(self, release, project):
         version_data = self.to_warehouse_version(release, extra={"project": project})
 
@@ -136,7 +132,7 @@ class Processor(object):
             version = self.get_and_update_or_create_version(release, project)
             self.sync_files(release, version)
 
-            self.store_release_hash(release)
+            self.store.set("pypi:process:%s:%s" % (release.name, release.version), release.hash())
 
     def delete(self, name, version, timestamp, action, matches):
         filename = None
