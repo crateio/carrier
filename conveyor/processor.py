@@ -79,24 +79,6 @@ class Processor(object):
 
         return [self.get_and_update_or_create_file(release, version, distribution) for distribution in release.files]
 
-    def delete_project_version(self, package, version):
-        key = "pypi:process:%s:%s" % (package, version)
-
-        logger.info("Deleting version '%s' of '%s'", version, package)
-
-        self.store.delete(key)
-        self.warehouse.versions.objects.filter(project__name=package, version=version).delete()
-
-    def delete_project(self, project):
-        search_key = "pypi:process:%s:*" % project
-
-        logger.info("Deleting '%s'", project)
-
-        for k in self.store.keys(search_key):
-            self.store.delete(k)
-
-        self.warehouse.projects.objects.filter(name=project).delete()
-
     def update(self, name, version=None, timestamp=None, action=None, matches=None):
         package = Package(self.pypi, name, version)
 
