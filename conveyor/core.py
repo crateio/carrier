@@ -45,7 +45,8 @@ class Conveyor(object):
         warehouse = forklift.Forklift(session=wsession)
 
         psession = requests.session(verify=self.config["PYPI_SSL_VERIFY"])
-        pypi = xmlrpc2.client.Client(self.config["PYPI_URI"], session=psession)
+        ptransports = [xmlrpc2.client.HTTPTransport(session=psession), xmlrpc2.client.HTTPSTransport(session=psession)]
+        pypi = xmlrpc2.client.Client(self.config["PYPI_URI"], transports=ptransports)
 
         self.processor = Processor(warehouse, pypi, store)
 
