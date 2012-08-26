@@ -118,7 +118,7 @@ class Processor(object):
         project, _ = self.warehouse.projects.objects.get_or_create(name=name)
 
         for release in package.releases():
-            if "/" in release["version"]:
+            if "/" in release.version:
                 # We cannot accept versions with a / in it.
                 logger.error("Skipping '%s' version '%s' because it contains a '/'", release.name, release.version)
                 continue
