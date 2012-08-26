@@ -6,7 +6,6 @@ import collections
 import datetime
 import hashlib
 import logging
-import json
 import re
 import time
 
