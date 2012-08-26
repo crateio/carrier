@@ -27,7 +27,7 @@ class Conveyor(object):
         super(Conveyor, self).__init__(*args, **kwargs)
 
         # Get configuration
-        self.config = Config(os.path.dirname(__file__))
+        self.config = Config(os.getcwd())
         self.config.from_object(defaults)
 
         if "CONVEYOR_CONF" in os.environ:
