@@ -9,6 +9,8 @@ WAREHOUSE_URI = "https://api.crate.io/v1/"
 PYPI_URI = "https://pypi.python.org/pypi"
 PYPI_SSL_VERIFY = os.path.join(os.path.dirname(__file__), "pypi.crt")
 
+REDIS = {}  # We leave this empty so client defaults occur
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
