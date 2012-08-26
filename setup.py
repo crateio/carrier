@@ -28,4 +28,10 @@ setup(
 
     packages=find_packages(exclude=["tests"]),
     zip_safe=False,
+
+    entry_points={
+        "console_scripts": [
+            "conveyor = conveyor.__main__:main",
+        ],
+    },
 )
