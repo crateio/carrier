@@ -27,6 +27,7 @@ setup(
     install_requires=install_requires,
 
     packages=find_packages(exclude=["tests"]),
+    package_data={"": ["LICENSE"], "conveyor": ["config/*.crt"]},
     zip_safe=False,
 
     entry_points={
