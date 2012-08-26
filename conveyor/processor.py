@@ -64,7 +64,7 @@ class Processor(object):
 
         return vfile
 
-    def sync_files(self, release, version):
+    def update_files(self, release, version):
         # Determine if any files need to be deleted
         warehouse_files = set([f.filename for f in version.files])
         local_files = set([x.filename for x in release.files])
@@ -98,7 +98,7 @@ class Processor(object):
             logger.info("Syncing '%s' version '%s'", release.name, release.version)
 
             version = self.get_and_update_or_create_version(release, project)
-            self.sync_files(release, version)
+            self.update_files(release, version)
 
             self.store.set("pypi:process:%s:%s" % (release.name, release.version), release.hash())
 
