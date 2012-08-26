@@ -12,10 +12,6 @@ import time
 from .pypi import Package
 
 
-_normalize_regex = re.compile(r"[^A-Za-z0-9.]+")
-_distutils2_version_capture = re.compile("^(.*?)(?:\(([^()]+)\))?$")
-
-
 logger = logging.getLogger(__name__)
 
 
