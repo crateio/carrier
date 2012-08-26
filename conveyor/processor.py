@@ -22,15 +22,6 @@ logger = logging.getLogger(__name__)
 EXPECTED = set(["resource_uri", "downloads", "modified"])
 
 
-def get(d, attr, default=None):
-    value = d.get(attr, default)
-
-    if not value or value in ["UNKNOWN", "None"]:
-        value = default
-
-    return value
-
-
 class Processor(object):
 
     def __init__(self, warehouse, pypi, store, *args, **kwargs):
