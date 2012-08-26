@@ -29,7 +29,9 @@ class Conveyor(object):
         # Get configuration
         self.config = Config(os.path.dirname(__file__))
         self.config.from_object(defaults)
-        self.config.from_envvar("CONVEYOR_CONF")
+
+        if "CONVEYOR_CONF" in os.environ:
+            self.config.from_envvar("CONVEYOR_CONF")
 
         # Initalize app
         logging.config.dictConfig(self.config["LOGGING"])
