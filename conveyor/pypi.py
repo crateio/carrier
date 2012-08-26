@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import base64
 import collections
 import hashlib
+import json
 
 import requests
 
@@ -152,6 +153,28 @@ class Release(object):
             data[key] = value
 
         return data
+
+    def hash(self):
+        def _dict_constant_data_structure(dictionary):
+            data = []
+
+            for k, v in dictionary.items():
+                if isinstance(v, dict):
+                    v = _dict_constant_data_structure(v)
+                elif isinstance(v, set):
+                    v = sorted(v)
+                data.append([k, v])
+
+            return sorted(data, key=lambda x: x[0])
+
+        data = self.serialize()
+        data["files"] = [f.serialize() for f in self.files]
+        data = json.dumps(_dict_constant_data_structure(data), default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)
+
+        return hashlib.sha512(data).hexdigest()[:32]
+
+    def changed(self, other):
+        return self.hash() == other
 
 
 class Package(object):

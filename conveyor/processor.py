@@ -41,38 +41,9 @@ class Processor(object):
         self.pypi = pypi
         self.store = store
 
-    def compute_hash(self, release):
-        def _dict_constant_data_structure(dictionary):
-            data = []
-
-            for k, v in dictionary.items():
-                if isinstance(v, dict):
-                    v = _dict_constant_data_structure(v)
-                elif isinstance(v, set):
-                    v = sorted(v)
-                data.append([k, v])
-
-            return sorted(data, key=lambda x: x[0])
-
-        if not hasattr(self, "_computed_hash"):
-            self._computed_hash = hashlib.sha512(json.dumps(
-                                                    _dict_constant_data_structure(release),
-                                                    default=lambda obj: obj.isoformat() if hasattr(obj, "isoformat") else obj)
-                                                ).hexdigest()[:32]
-
-        return self._computed_hash
-
-    def release_changed(self, release):
-        key = "pypi:process:%s:%s" % (release["name"], release["version"])
-
-        stored_hash = self.store.get(key)
-        computed_hash = self.compute_hash(release)
-
-        return not (stored_hash and stored_hash == computed_hash)
-
     def store_release_hash(self, release):
         key = "pypi:process:%s:%s" % (release["name"], release["version"])
-        self.store.set(key, self.compute_hash(release))
+        self.store.set(key, release.hash())
 
     def get_and_update_or_create_version(self, release, project):
         version_data = self.to_warehouse_version(release, extra={"project": project})
@@ -173,7 +144,7 @@ class Processor(object):
                 logger.error("Skipping '%s' version '%s' because it contains a '/'", release["name"], release["version"])
                 continue
 
-            if not self.release_changed(release):
+            if not release.changed(self.store.get("pypi:process:%s:%s" % (release["name"], release["version"]))):
                 logger.info("Skipping '%s' version '%s' because it has not changed", release["name"], release["version"])
                 continue
 
