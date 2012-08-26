@@ -125,6 +125,11 @@ class Release(object):
 
         self._files = [File(**x) for x in kwargs.pop("files", [])]
 
+        # Old and useless
+        self._old_requires = kwargs.pop("requires", [])
+        self._old_provides = kwargs.pop("provides", [])
+        self._old_obsoletes = kwargs.pop("obsoletes", [])
+
         # PyPI internal data
         self._package_url = kwargs.pop("package_url", None)
         self._release_url = kwargs.pop("release_url", None)
