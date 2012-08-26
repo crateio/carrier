@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 def get_jobs(last=0):
     current = time.mktime(datetime.datetime.utcnow().timetuple())
 
-    logger.info("Current time is '%s'", current)
+    print "Current time is", current
 
     app = Conveyor()
 
