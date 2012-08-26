@@ -1,4 +1,3 @@
-import posixpath
 import re
 import urlparse
 
@@ -35,15 +34,6 @@ _url = re.compile(
         r'\[?[A-F0-9]*:[A-F0-9:]+\]?)'  # ...or ipv6
         r'(?::\d+)?'  # optional port
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-
-
-def splitext(path):
-    """Like os.path.splitext, but take off .tar too"""
-    base, ext = posixpath.splitext(path)
-    if base.lower().endswith('.tar'):
-        ext = base[-4:] + ext
-        base = base[:-4]
-    return base, ext
 
 
 def clean_uri(url):
