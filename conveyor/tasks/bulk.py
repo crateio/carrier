@@ -32,7 +32,7 @@ def handle_job(name):
                 tried += 1
 
                 app = Conveyor()
-                app.update(name)
+                app.processor.update(name)
 
                 break
             except (ConnectionError, HTTPError):
