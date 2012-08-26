@@ -19,9 +19,6 @@ _distutils2_version_capture = re.compile("^(.*?)(?:\(([^()]+)\))?$")
 logger = logging.getLogger(__name__)
 
 
-EXPECTED = set(["resource_uri", "downloads", "modified"])
-
-
 class Processor(object):
 
     def __init__(self, warehouse, pypi, store, *args, **kwargs):
