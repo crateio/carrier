@@ -174,7 +174,7 @@ class Release(object):
         return hashlib.sha512(data).hexdigest()[:32]
 
     def changed(self, other):
-        return self.hash() == other
+        return not self.hash() == other
 
 
 class Package(object):
