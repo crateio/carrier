@@ -123,6 +123,8 @@ class Release(object):
         self.provides = [split_meta(req) for req in kwargs.pop("provides_dist", [])]
         self.obsoletes = [split_meta(req) for req in kwargs.pop("obsoletes_dist", [])]
 
+        self.requires_external = kwargs.pop("requires_external", [])
+
         self._files = [File(**x) for x in kwargs.pop("files", [])]
 
         # Old and useless
