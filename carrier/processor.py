@@ -187,7 +187,7 @@ class Processor(object):
 
         # Hijack the warehouse session and url
         last_modified_url = urlparse.urljoin(self.warehouse.url, "/last-modified")
-        resp = self.warehouse.session.put(last_modified_url, {"date": current.isoformat()})
+        resp = self.warehouse.session.post(last_modified_url, {"date": current.isoformat()})
         resp.raise_for_status()
 
         self.store.set("pypi:since", time.mktime(current.timetuple()))
