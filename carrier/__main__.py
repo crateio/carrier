@@ -2,11 +2,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-from .core import Conveyor
+from .core import Carrier
 
 
 def main():
-    Conveyor().run()
+    Carrier().run()
 
 
 if __name__ == "__main__":

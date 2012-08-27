@@ -21,10 +21,10 @@ from .processor import Processor
 logger = logging.getLogger(__name__)
 
 
-class Conveyor(object):
+class Carrier(object):
 
     def __init__(self, *args, **kwargs):
-        super(Conveyor, self).__init__(*args, **kwargs)
+        super(Carrier, self).__init__(*args, **kwargs)
 
         # Get configuration
         self.config = Config(os.getcwd())
@@ -62,5 +62,5 @@ class Conveyor(object):
             while True:
                 time.sleep(999)
         except KeyboardInterrupt:
-            logger.info("Shutting down Conveyor...")
+            logger.info("Shutting down Carrier...")
             scheduler.shutdown(wait=False)

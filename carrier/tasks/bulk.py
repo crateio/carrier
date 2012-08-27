@@ -8,7 +8,7 @@ import time
 
 from requests.exceptions import ConnectionError, HTTPError
 
-from ..core import Conveyor
+from ..core import Carrier
 
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ def get_jobs(last=0):
 
     print "Current time is", current
 
-    app = Conveyor()
+    app = Carrier()
 
     for package in set(app.processor.pypi.list_packages()):
         yield package
@@ -35,7 +35,7 @@ def handle_job(name):
             try:
                 tried += 1
 
-                app = Conveyor()
+                app = Carrier()
                 app.processor.update(name)
 
                 break
