@@ -8,6 +8,7 @@ import hashlib
 import logging
 import re
 import time
+import urlparse
 
 from .pypi import Package
 
@@ -142,7 +143,7 @@ class Processor(object):
             # This is the first time we've ran so we need to do a bulk import
             raise RuntimeError(" Cannot process changes with no value for the last successful run.")
 
-        current = time.mktime(datetime.datetime.utcnow().timetuple())
+        current = datetime.datetime.utcnow()
 
         since = int(float(self.store.get("pypi:since"))) - 10
 
@@ -184,6 +185,11 @@ class Processor(object):
             else:
                 logger.debug("Skipping %(name)s %(version)s %(timestamp)s %(action)s" % logdata)
 
-        self.store.set("pypi:since", current)
+        # Hijack the warehouse session and url
+        last_modified_url = urlparse.urljoin(self.warehouse.url, "/last-modified")
+        resp = self.warehouse.session.put(last_modified_url, {"date": current.isoformat()})
+        resp.raise_for_status()
+
+        self.store.set("pypi:since", time.mktime(current.timetuple()))
 
         logger.info("Finished changed projects synchronization")
