@@ -143,7 +143,7 @@ class Processor(object):
             # This is the first time we've ran so we need to do a bulk import
             raise RuntimeError(" Cannot process changes with no value for the last successful run.")
 
-        current = datetime.datetime.utcnow()
+        current = datetime.datetime.utcnow().replace(microsecond=0)
 
         since = int(float(self.store.get("pypi:since"))) - 10
 
