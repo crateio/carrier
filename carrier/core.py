@@ -16,6 +16,7 @@ from apscheduler.scheduler import Scheduler
 
 from .config import Config, defaults
 from .processor import Processor
+from .utils import user_agent
 
 
 logger = logging.getLogger(__name__)
@@ -38,10 +39,13 @@ class Carrier(object):
 
         store = redis.StrictRedis(**dict([(k.lower(), v) for k, v in self.config["REDIS"].items()]))
 
-        wsession = requests.session(auth=(
-                        self.config["WAREHOUSE_AUTH"]["USERNAME"],
-                        self.config["WAREHOUSE_AUTH"]["PASSWORD"],
-                    ))
+        wsession = requests.session(
+                        auth=(
+                            self.config["WAREHOUSE_AUTH"]["USERNAME"],
+                            self.config["WAREHOUSE_AUTH"]["PASSWORD"],
+                        ),
+                        headers={"User-Agent": user_agent()},
+                    )
         warehouse = forklift.Forklift(session=wsession)
 
         psession = requests.session(verify=self.config["PYPI_SSL_VERIFY"])
