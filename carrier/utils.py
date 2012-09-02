@@ -7,8 +7,6 @@ import re
 import sys
 import urlparse
 
-import distutils2.version
-
 from . import __version__
 
 
@@ -21,10 +19,78 @@ class NormalizingDict(dict):
         return value
 
 
+_PREDICATE = re.compile(r"(?i)^\s*(\w[\s\w-]*(?:\.\w*)*)(.*)")
+_VERSIONS = re.compile(r"^\s*\((?P<versions>.*)\)\s*$|^\s*(?P<versions2>.*)\s*$")
+_SPLIT_CMP = re.compile(r"^\s*(<=|>=|<|>|!=|==)\s*([^\s,]+)\s*$")
+
+
+def _split_predicate(predicate):
+    match = _SPLIT_CMP.match(predicate)
+    if match is None:
+        # probably no op, we'll use "=="
+        comp, version = '==', predicate
+    else:
+        comp, version = match.groups()
+    return comp, version  # NormalizedVersion(version)
+
+
+class VersionPredicate(object):
+    """Defines a predicate: ProjectName (>ver1,ver2, ..)"""
+
+    _operators = {"<": lambda x, y: x < y,
+                  ">": lambda x, y: x > y,
+                  "<=": lambda x, y: str(x).startswith(str(y)) or x < y,
+                  ">=": lambda x, y: str(x).startswith(str(y)) or x > y,
+                  "==": lambda x, y: str(x).startswith(str(y)),
+                  "!=": lambda x, y: not str(x).startswith(str(y)),
+                  }
+
+    def __init__(self, predicate):
+        self._string = predicate
+        predicate = predicate.strip()
+        match = _PREDICATE.match(predicate)
+        if match is None:
+            raise ValueError('Bad predicate "%s"' % predicate)
+
+        name, predicates = match.groups()
+        self.name = name.strip()
+        self.predicates = []
+        if predicates is None:
+            return
+
+        predicates = _VERSIONS.match(predicates.strip())
+        if predicates is None:
+            return
+
+        predicates = predicates.groupdict()
+        if predicates['versions'] is not None:
+            versions = predicates['versions']
+        else:
+            versions = predicates.get('versions2')
+
+        if versions is not None:
+            for version in versions.split(','):
+                if version.strip() == '':
+                    continue
+                self.predicates.append(_split_predicate(version))
+
+    def match(self, version):
+        """Check if the provided version matches the predicates."""
+        # if isinstance(version, basestring):
+        #     version = NormalizedVersion(version)
+        for operator, predicate in self.predicates:
+            if not self._operators[operator](version, predicate):
+                return False
+        return True
+
+    def __repr__(self):
+        return self._string
+
+
 def split_meta(meta):
     meta_split = meta.split(";", 1)
 
-    vp = distutils2.version.VersionPredicate(meta_split[0].strip())
+    vp = VersionPredicate(meta_split[0].strip())
     meta_env = meta_split[1].strip() if len(meta_split) == 2 else ""
 
     return {
