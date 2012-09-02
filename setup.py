@@ -6,6 +6,7 @@ import carrier
 
 install_requires = [
     "APScheduler",
+    "distutils2",
     "forklift",
     "redis",
     "six",

@@ -7,6 +7,8 @@ import re
 import sys
 import urlparse
 
+import distutils2.version
+
 from . import __version__
 
 
@@ -19,17 +21,15 @@ class NormalizingDict(dict):
         return value
 
 
-_distutils2_version_capture = re.compile("^(.*?)(?:\(([^()]+)\))?$")
-
-
 def split_meta(meta):
     meta_split = meta.split(";", 1)
-    meta_name, meta_version = _distutils2_version_capture.search(meta_split[0].strip()).groups()
+
+    vp = distutils2.version.VersionPredicate(meta_split[0].strip())
     meta_env = meta_split[1].strip() if len(meta_split) == 2 else ""
 
     return {
-        "name": meta_name,
-        "version": meta_version if meta_version is not None else "",
+        "name": vp.name,
+        "version": ",".join(["".join(p) for p in [(op if op != "==" else "", v) for op, v in vp.predicates]]),
         "environment": meta_env,
     }
 
