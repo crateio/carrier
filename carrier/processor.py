@@ -80,7 +80,7 @@ class Processor(object):
 
         return [self.get_and_update_or_create_file(release, version, distribution) for distribution in release.files]
 
-    def update(self, name, version=None, timestamp=None, action=None, matches=None):
+    def update(self, name, version=None, timestamp=None, action=None, matches=None, force=False):
         package = Package(self.pypi, name, version)
 
         # Process the Name
@@ -92,7 +92,7 @@ class Processor(object):
                 logger.error("Skipping '%s' version '%s' because it contains a '/'", release.name, release.version)
                 continue
 
-            if not release.changed(self.store.get("pypi:process:%s:%s" % (release.name, release.version))):
+            if not release.changed(self.store.get("pypi:process:%s:%s" % (release.name, release.version))) and not force:
                 logger.info("Skipping '%s' version '%s' because it has not changed", release.name, release.version)
                 continue
 
