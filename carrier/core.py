@@ -47,6 +47,7 @@ class Carrier(object):
                         headers={"User-Agent": user_agent()},
                     )
         warehouse = forklift.Forklift(session=wsession)
+        warehouse.url = self.config["WAREHOUSE_URI"]
 
         psession = requests.session(verify=self.config["PYPI_SSL_VERIFY"], headers={"User-Agent": user_agent()})
         ptransports = [xmlrpc2.client.HTTPTransport(session=psession), xmlrpc2.client.HTTPSTransport(session=psession)]
