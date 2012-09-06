@@ -166,13 +166,13 @@ class Processor(object):
                 changes = [changes]
 
         for name, version, timestamp, action in changes:
-            action_hash = hashlib.sha512(":".join([unicode(x) for x in [name, version, timestamp, action]])).hexdigest()[:32]
+            action_hash = hashlib.sha512(u":".join([unicode(x) for x in [name, version, timestamp, action]])).hexdigest()[:32]
             action_key = "pypi:changelog:%s" % action_hash
 
             logdata = {"action": action, "name": name, "version": version, "timestamp": timestamp}
 
             if not self.store.exists(action_key):
-                logger.debug("Processing %(name)s %(version)s %(timestamp)s %(action)s" % logdata)
+                logger.debug(u"Processing %(name)s %(version)s %(timestamp)s %(action)s" % logdata)
 
                 # Dispatch Based on the action
                 for pattern, func in dispatch.iteritems():
@@ -183,7 +183,7 @@ class Processor(object):
 
                 self.store.setex(action_key, 2592000, "1")
             else:
-                logger.debug("Skipping %(name)s %(version)s %(timestamp)s %(action)s" % logdata)
+                logger.debug(u"Skipping %(name)s %(version)s %(timestamp)s %(action)s" % logdata)
 
         # Hijack the warehouse session and url
         last_modified_url = urlparse.urljoin(self.warehouse.url, "/last-modified")
