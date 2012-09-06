@@ -166,7 +166,7 @@ class Processor(object):
                 changes = [changes]
 
         for name, version, timestamp, action in changes:
-            action_hash = hashlib.sha512(u":".join([unicode(x) for x in [name, version, timestamp, action]])).hexdigest()[:32]
+            action_hash = hashlib.sha512(u":".join([unicode(x) for x in [name, version, timestamp, action]]).encode("utf-8")).hexdigest()[:32]
             action_key = "pypi:changelog:%s" % action_hash
 
             logdata = {"action": action, "name": name, "version": version, "timestamp": timestamp}
